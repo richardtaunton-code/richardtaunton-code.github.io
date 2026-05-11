@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Storage Calc">
+<meta name="theme-color" content="#0a0c10">
+<meta name="description" content="Broadcast storage calculator for baseband channels and card ingest workflows.">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%230a0c10'/%3E%3Crect x='28' y='52' width='124' height='76' rx='6' fill='none' stroke='%2300e5a0' stroke-width='6'/%3E%3Cline x1='28' y1='80' x2='152' y2='80' stroke='%2300e5a0' stroke-width='4'/%3E%3Ccircle cx='50' cy='66' r='5' fill='%2300e5a0'/%3E%3Ccircle cx='68' cy='66' r='5' fill='%2300b8ff'/%3E%3Crect x='40' y='95' width='30' height='6' rx='3' fill='%2300e5a0' opacity='.7'/%3E%3Crect x='40' y='108' width='50' height='6' rx='3' fill='%2300b8ff' opacity='.5'/%3E%3Crect x='100' y='95' width='40' height='19' rx='3' fill='%2300e5a0' opacity='.2'/%3E%3C/svg%3E">
+<title>Broadcast Storage Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap');
+
+:root {
+  --bg:       #0a0c10;
+  --panel:    #0f1218;
+  --panel2:   #141820;
+  --border:   #1e2530;
+  --border2:  #2a3340;
+  --accent:   #00e5a0;
+  --accent2:  #00b8ff;
+  --accent3:  #ff6b35;
+  --text:     #d0dcea;
+  --text2:    #7a8fa8;
+  --text3:    #3d5268;
+  --mono:     'Share Tech Mono', monospace;
+  --sans:     'Barlow', sans-serif;
+  --cond:     'Barlow Condensed', sans-serif;
+  --radius:   4px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ─── HEADER ─── */
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.logo-text {
+  font-family: var(--cond);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.logo-text span {
+  color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  font-family: var(--cond);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  background: #00ffb3;
+  border-color: #00ffb3;
+  color: #000;
+}
+
+/* ─── LAYOUT ─── */
+.app {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 56px);
+}
+
+/* ─── LEFT PANEL ─── */
+.left-panel {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  border-bottom: 1px solid var(--border);
+  padding: 20px;
+}
+
+.section-title {
+  font-family: var(--cond);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── FORM CONTROLS ─── */
+.field {
+  margin-bottom: 12px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+}
+
+.field select option { background: #1a2030; }
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.row3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+/* ─── STREAM LIST ─── */
+.stream-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stream-card {
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 12px;
+  position: relative;
+  cursor: default;
+  transition: border-color 0.15s;
+}
+
+.stream-card:hover {
+  border-color: var(--border2);
+}
+
+.stream-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.stream-badge {
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--border);
+  color: var(--text2);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.stream-delete {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: color 0.15s;
+}
+
+.stream-delete:hover { color: var(--accent3); }
+
+.stream-card select,
+.stream-card input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.stream-card select:focus,
+.stream-card input:focus {
+  border-color: var(--accent);
+}
+
+.stream-card select option { background: #1a2030; }
+
+.stream-bitrate-tag {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  text-align: right;
+}
+
+.add-stream-btn {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  color: var(--text3);
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.add-stream-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─── RIGHT PANEL ─── */
+.right-panel {
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--bg);
+}
+
+/* ─── SUMMARY CARDS ─── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.summary-card.green::before  { background: var(--accent); }
+.summary-card.blue::before   { background: var(--accent2); }
+.summary-card.orange::before { background: var(--accent3); }
+.summary-card.purple::before { background: #a855f7; }
+
+.summary-label {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--cond);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.summary-unit {
+  font-size: 13px;
+  color: var(--text2);
+  margin-left: 4px;
+}
+
+.summary-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+/* ─── TABLE ─── */
+.table-wrap {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.table-title {
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+tr:last-child td { border-bottom: none; }
+
+tbody tr:hover td { background: var(--panel2); }
+
+.td-stream { font-family: var(--sans); font-weight: 500; color: var(--text); }
+.td-codec  { color: var(--text2); font-size: 11px; }
+.td-br     { color: var(--accent2); }
+.td-hr     { color: var(--text); }
+.td-total  { color: var(--accent); font-weight: 500; }
+.td-redund { color: var(--accent3); font-weight: 600; }
+
+.color-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── NOTES BOX ─── */
+.notes-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.notes-box strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ─── BANDWIDTH BAR ─── */
+.bw-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.bw-label {
+  font-size: 12px;
+  color: var(--text2);
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.bw-bar-wrap {
+  flex: 1;
+  height: 10px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bw-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.bw-val {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent2);
+  min-width: 80px;
+  text-align: right;
+}
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+}
+
+.empty-state svg { margin-bottom: 16px; opacity: 0.3; }
+.empty-state h3 { font-family: var(--cond); font-size: 18px; color: var(--text2); margin-bottom: 8px; }
+.empty-state p { font-size: 13px; }
+
+/* ─── STORAGE TYPE NOTE ─── */
+.stor-note {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.5;
+  margin-top: 6px;
+  min-height: 36px;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ─── TOOLTIP ─── */
+[data-tip] { position: relative; cursor: help; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e2535;
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--text);
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 5px 10px;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* Codec group separator in select */
+optgroup { color: var(--text3); font-size: 11px; }
+
+.export-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* ─── TOGGLE SWITCH ─── */
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+}
+.toggle-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  cursor: pointer;
+  transition: color 0.15s;
+  user-select: none;
+}
+.toggle-label.active { color: var(--accent); }
+.toggle {
+  position: relative;
+  width: 36px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--border2);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: var(--accent); }
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle input:checked + .toggle-track::after { transform: translateX(18px); }
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .left-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+  }
+
+  .right-panel {
+    padding: 16px;
+  }
+
+  header {
+    padding: 0 16px;
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    /* safe area for iPhone notch */
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  .logo-text {
+    font-size: 15px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .summary-value {
+    font-size: 20px;
+  }
+
+  /* Stack row2 to single column on very small screens */
+  @media (max-width: 400px) {
+    .row2 { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: 1fr; }
+  }
+
+  table { font-size: 11px; }
+  th, td { padding: 7px 8px; }
+
+  /* Horizontal scroll for wide tables */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .section { padding: 16px; }
+
+  /* Bottom safe area for iPhone home indicator */
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🗄</div>
+    <div class="logo-text">Broadcast <span>Storage</span> Calc</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="resetAll()">Reset</button>
+    <button class="btn" onclick="saveProject()">💾 Save</button>
+    <button class="btn" onclick="loadProject()">📂 Load</button>
+    <button class="btn btn-primary" onclick="exportCSV()">Export CSV</button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ═══ LEFT PANEL ═══ -->
+  <div class="left-panel">
+
+    <!-- ── BASEBAND CHANNELS ── -->
+    <div class="section">
+      <div class="section-title">Baseband Channels</div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Days</label>
+          <input type="number" id="days" value="1" min="1" max="365" onchange="calc()">
+        </div>
+        <div class="field">
+          <label>Hours per day</label>
+          <input type="number" id="hours" value="8" min="0.5" max="24" step="0.5" onchange="calc()">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label data-tip="Number of identical storage copies">Redundancy copies</label>
+          <input type="number" id="redundancy" value="2" min="1" max="5" onchange="calc()">
+        </div>
+        <div class="field">
+          <label data-tip="Filesystem overhead, metadata, safety margin">Overhead factor</label>
+          <select id="overhead" onchange="calc()">
+            <option value="1.1"  id="oh-opt-1">10% — Minimal</option>
+            <option value="1.15" id="oh-opt-2">15% — Standard</option>
+            <option value="1.2"  id="oh-opt-3" selected>20% — Comfortable</option>
+            <option value="1.3"  id="oh-opt-4">30% — Conservative</option>
+            <option value="1.5"  id="oh-opt-5">50% — Very cautious</option>
+          </select>
+          <div class="toggle-wrap">
+            <span class="toggle-label active" id="oh-lbl-pct">%</span>
+            <label class="toggle">
+              <input type="checkbox" id="oh-toggle" onchange="toggleOverheadMode()">
+              <div class="toggle-track"></div>
+            </label>
+            <span class="toggle-label" id="oh-lbl-dec">0.0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Storage type</label>
+        <select id="stor-type" onchange="calc()">
+          <option value="online">Online NAS / SAN</option>
+          <option value="nearline">Nearline (LTO / Slow NAS)</option>
+          <option value="portable">Portable SSD / HDD / RAID</option>
+          <option value="cloud">Cloud storage</option>
+        </select>
+        <div class="stor-note" id="stor-note"></div>
+      </div>
+    </div>
+
+    <div class="section" style="flex:1">
+      <div class="section-title">Stream Groups</div>
+      <div class="stream-list" id="stream-list"></div>
+      <button class="add-stream-btn" onclick="addStream()">+ Add stream group</button>
+    </div>
+
+    <!-- ── CARD INGEST ── -->
+    <div class="section">
+      <div class="section-title">Card Ingest</div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Days</label>
+          <input type="number" id="ci-days" value="1" min="1" max="365" onchange="calc()">
+        </div>
+        <div class="field">
+          <label>Hours per day</label>
+          <input type="number" id="ci-hours" value="8" min="0.5" max="24" step="0.5" onchange="calc()">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label data-tip="Number of identical storage copies">Redundancy copies</label>
+          <input type="number" id="ci-redundancy" value="2" min="1" max="5" onchange="calc()">
+        </div>
+        <div class="field">
+          <label data-tip="Filesystem overhead, metadata, safety margin">Overhead factor</label>
+          <select id="ci-overhead" onchange="calc()">
+            <option value="1.1"  id="ci-oh-opt-1">10% — Minimal</option>
+            <option value="1.15" id="ci-oh-opt-2">15% — Standard</option>
+            <option value="1.2"  id="ci-oh-opt-3" selected>20% — Comfortable</option>
+            <option value="1.3"  id="ci-oh-opt-4">30% — Conservative</option>
+            <option value="1.5"  id="ci-oh-opt-5">50% — Very cautious</option>
+          </select>
+          <div class="toggle-wrap">
+            <span class="toggle-label active" id="ci-oh-lbl-pct">%</span>
+            <label class="toggle">
+              <input type="checkbox" id="ci-oh-toggle" onchange="toggleOverheadMode('ci')">
+              <div class="toggle-track"></div>
+            </label>
+            <span class="toggle-label" id="ci-oh-lbl-dec">0.0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Storage type</label>
+        <select id="ci-stor-type" onchange="calc()">
+          <option value="online">Online NAS / SAN</option>
+          <option value="nearline">Nearline (LTO / Slow NAS)</option>
+          <option value="portable">Portable SSD / HDD / RAID</option>
+          <option value="cloud">Cloud storage</option>
+        </select>
+        <div class="stor-note" id="ci-stor-note"></div>
+      </div>
+    </div>
+
+    <div class="section" style="flex:1">
+      <div class="section-title">Card Ingest — Stream Groups</div>
+      <div class="stream-list" id="ci-stream-list"></div>
+      <button class="add-stream-btn" onclick="addStream('ci')">+ Add stream group</button>
+    </div>
+
+  </div>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="right-panel" id="right-panel">
+    <div class="empty-state" id="empty-state">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <rect x="8" y="16" width="48" height="32" rx="3" stroke="#7a8fa8" stroke-width="2"/>
+        <line x1="8" y1="28" x2="56" y2="28" stroke="#7a8fa8" stroke-width="1.5"/>
+        <circle cx="20" cy="22" r="2" fill="#7a8fa8"/>
+        <circle cx="28" cy="22" r="2" fill="#7a8fa8"/>
+      </svg>
+      <h3>No streams yet</h3>
+      <p>Add a stream on the left to begin calculating storage requirements.</p>
+    </div>
+    <div id="results" style="display:none"></div>
+  </div>
+
+</div>
+
+<input type="file" id="file-input" accept=".json" style="display:none" onchange="loadFile(event)">
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+
+const CODECS = [
+  // Uncompressed
+  { id:'unc_422_8',   label:'Uncompressed 4:2:2 8-bit',   base:894,   group:'Uncompressed' },
+  { id:'unc_422_10',  label:'Uncompressed 4:2:2 10-bit',  base:1118,  group:'Uncompressed' },
+  { id:'unc_444_10',  label:'Uncompressed 4:4:4 10-bit',  base:1493,  group:'Uncompressed' },
+  { id:'unc_444_12',  label:'Uncompressed 4:4:4 12-bit',  base:1790,  group:'Uncompressed' },
+  // Apple ProRes
+  { id:'prores_4444xq', label:'ProRes 4444 XQ',  base:500,  group:'Apple ProRes' },
+  { id:'prores_4444',   label:'ProRes 4444',      base:330,  group:'Apple ProRes' },
+  { id:'prores_422hq',  label:'ProRes 422 HQ',    base:220,  group:'Apple ProRes' },
+  { id:'prores_422',    label:'ProRes 422',        base:147,  group:'Apple ProRes' },
+  { id:'prores_422lt',  label:'ProRes 422 LT',    base:102,  group:'Apple ProRes' },
+  { id:'prores_proxy',  label:'ProRes Proxy',      base:45,   group:'Apple ProRes' },
+  // Avid DNxHR / DNxHD
+  { id:'dnxhd_444',     label:'DNxHD/HR 444',     base:450,  group:'Avid DNxHR/DNxHD' },
+  { id:'dnxhd_hqx',     label:'DNxHD/HR HQX',     base:220,  group:'Avid DNxHR/DNxHD' },
+  { id:'dnxhd_hq',      label:'DNxHD/HR HQ',      base:175,  group:'Avid DNxHR/DNxHD' },
+  { id:'dnxhd_sq',      label:'DNxHD/HR SQ',      base:117,  group:'Avid DNxHR/DNxHD' },
+  { id:'dnxhd_lb',      label:'DNxHD/HR LB',      base:45,   group:'Avid DNxHR/DNxHD' },
+  // Sony XDCAM
+  { id:'xdcam_hd422',   label:'XDCAM HD 422 50',  base:50,   group:'Sony XDCAM',   fixed:true },
+  { id:'xdcam_ex',      label:'XDCAM EX 35',       base:35,   group:'Sony XDCAM',   fixed:true },
+  { id:'xdcam_hd18',    label:'XDCAM HD 18Mbps',   base:18,   group:'Sony XDCAM',   fixed:true },
+  // XAVC
+  { id:'xavc_intra_4k', label:'XAVC Intra 4K',    base:600,  group:'Sony XAVC' },
+  { id:'xavc_intra_hd', label:'XAVC Intra HD',    base:200,  group:'Sony XAVC' },
+  { id:'xavc_long',     label:'XAVC Long GOP',     base:50,   group:'Sony XAVC',   fixed:true },
+  // H.264
+  { id:'h264_50',       label:'H.264 / AVC 50M',   base:50,   group:'H.264 / AVC',  fixed:true },
+  { id:'h264_25',       label:'H.264 / AVC 25M',   base:25,   group:'H.264 / AVC',  fixed:true },
+  { id:'h264_10',       label:'H.264 / AVC 10M',   base:10,   group:'H.264 / AVC',  fixed:true },
+  // H.265
+  { id:'h265_50',       label:'H.265 / HEVC 50M',  base:50,   group:'H.265 / HEVC', fixed:true },
+  { id:'h265_25',       label:'H.265 / HEVC 25M',  base:25,   group:'H.265 / HEVC', fixed:true },
+  { id:'h265_15',       label:'H.265 / HEVC 15M',  base:15,   group:'H.265 / HEVC', fixed:true },
+  // IMX / D-10
+  { id:'imx_50',        label:'IMX / D-10 50M',    base:50,   group:'IMX / D-10',   fixed:true },
+  { id:'imx_40',        label:'IMX / D-10 40M',    base:40,   group:'IMX / D-10',   fixed:true },
+  { id:'imx_30',        label:'IMX / D-10 30M',    base:30,   group:'IMX / D-10',   fixed:true },
+  // JPEG 2000
+  { id:'j2k_vl',        label:'JPEG 2000 Visually Lossless', base:200, group:'JPEG 2000' },
+  { id:'j2k_300',       label:'JPEG 2000 300M',    base:300,  group:'JPEG 2000',    fixed:true },
+  { id:'j2k_600',       label:'JPEG 2000 600M',    base:600,  group:'JPEG 2000',    fixed:true },
+  // AVC-Intra
+  { id:'avci_200',      label:'AVC-Intra 200',     base:200,  group:'AVC-Intra',    fixed:true },
+  { id:'avci_100',      label:'AVC-Intra 100',     base:100,  group:'AVC-Intra',    fixed:true },
+  { id:'avci_50',       label:'AVC-Intra 50',      base:50,   group:'AVC-Intra',    fixed:true },
+  // DPX
+  { id:'dpx_10',        label:'DPX 10-bit',        base:1193, group:'DPX' },
+  { id:'dpx_16',        label:'DPX 16-bit',        base:1791, group:'DPX' },
+  // Cineform
+  { id:'cf_film_sc',    label:'CineForm Film Scan', base:880,  group:'CineForm' },
+  { id:'cf_high',       label:'CineForm High',      base:440,  group:'CineForm' },
+  { id:'cf_medium',     label:'CineForm Medium',    base:220,  group:'CineForm' },
+];
+
+const RASTERS = [
+  { id:'SD_4_3',     label:'SD 720×576 4:3',     px:720*576,   fps_default:25 },
+  { id:'SD_16_9',    label:'SD 720×576 16:9',    px:720*576,   fps_default:25 },
+  { id:'HD_720',     label:'HD 1280×720',         px:1280*720,  fps_default:50 },
+  { id:'HD_1080',    label:'HD 1920×1080',        px:1920*1080, fps_default:25 },
+  { id:'2K',         label:'2K 2048×1080',        px:2048*1080, fps_default:25 },
+  { id:'4K_UHD',    label:'4K UHD 3840×2160',    px:3840*2160, fps_default:25 },
+  { id:'4K_DCI',    label:'4K DCI 4096×2160',    px:4096*2160, fps_default:24 },
+  { id:'6K',         label:'6K 5760×3240',        px:5760*3240, fps_default:25 },
+  { id:'8K',         label:'8K 7680×4320',        px:7680*4320, fps_default:25 },
+];
+
+const REF_PX  = 1920 * 1080;
+const REF_FPS = 25;
+
+const STREAM_COLORS = ['#00e5a0','#00b8ff','#ff6b35','#a855f7','#f59e0b','#ec4899','#10b981','#6366f1'];
+
+const STOR_NOTES = {
+  online:   'Online NAS/SAN: fast random access. Suitable for live ingest and simultaneous edit. Ensure sustained write bandwidth matches total stream bitrate.',
+  nearline: 'Nearline (LTO / slow NAS): low cost per TB. Ideal for archive or backup copies. Not suitable for live ingest or direct editing.',
+  portable: 'Portable SSD/HDD/RAID: flexible for field use. Consider RAID-5/6 arrays for multi-stream ingest. Verify sustained write speed.',
+  cloud:    'Cloud storage: best suited to nearline/archive. Ensure upload bandwidth exceeds total bitrate. Factor in egress costs for retrieval.',
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE  (bb = Baseband Channels, ci = Card Ingest)
+// ═══════════════════════════════════════════════════════════════
+
+const state = {
+  bb: { streams: [], nextId: 1 },
+  ci: { streams: [], nextId: 1 },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// CODEC / RASTER HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+function buildCodecOptions() {
+  const groups = {};
+  CODECS.forEach(c => {
+    if (!groups[c.group]) groups[c.group] = [];
+    groups[c.group].push(c);
+  });
+  let html = '';
+  for (const [gname, codecs] of Object.entries(groups)) {
+    html += `<optgroup label="${gname}">`;
+    codecs.forEach(c => { html += `<option value="${c.id}">${c.label}</option>`; });
+    html += '</optgroup>';
+  }
+  return html;
+}
+
+function buildRasterOptions(rasterSel = 'HD_1080') {
+  return RASTERS.map(r =>
+    `<option value="${r.id}" ${r.id === rasterSel ? 'selected' : ''}>${r.label}</option>`
+  ).join('');
+}
+
+const FPS_OPTS = [23.976, 24, 25, 29.97, 30, 48, 50, 59.94, 60, 100, 120]
+  .map(f => `<option value="${f}" ${f === 25 ? 'selected' : ''}>${f}</option>`)
+  .join('');
+
+// ═══════════════════════════════════════════════════════════════
+// STREAM MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+function addStream(ctx, data) {
+  ctx = ctx || 'bb';
+  const id = state[ctx].nextId++;
+  const s = data || {
+    id, label: `Set ${id}`,
+    codecId: 'prores_422hq',
+    rasterId: 'HD_1080',
+    fps: 25,
+    count: 1,
+  };
+  if (!data) s.id = id;
+  state[ctx].streams.push(s);
+  renderStreamList(ctx);
+  calc();
+}
+
+function removeStream(ctx, id) {
+  state[ctx].streams = state[ctx].streams.filter(s => s.id !== id);
+  renderStreamList(ctx);
+  calc();
+}
+
+function streamChange(ctx, id, field, val) {
+  const s = state[ctx].streams.find(s => s.id === id);
+  if (!s) return;
+  if (field === 'fps' || field === 'count') val = parseFloat(val);
+  s[field] = val;
+  if (field === 'rasterId') {
+    const r = RASTERS.find(r => r.id === val);
+    if (r) s.fps = r.fps_default;
+  }
+  renderStreamList(ctx);
+  calc();
+}
+
+function renderStreamList(ctx) {
+  const listId = ctx === 'ci' ? 'ci-stream-list' : 'stream-list';
+  const el = document.getElementById(listId);
+  const codecHtml = buildCodecOptions();
+  el.innerHTML = state[ctx].streams.map((s, i) => {
+    const color = STREAM_COLORS[i % STREAM_COLORS.length];
+    const br = bitrate(s);
+    return `
+    <div class="stream-card" id="sc-${ctx}-${s.id}">
+      <div class="stream-card-header">
+        <span class="stream-badge" style="border-left:3px solid ${color};padding-left:6px">${s.label}</span>
+        <button class="stream-delete" onclick="removeStream('${ctx}',${s.id})">×</button>
+      </div>
+      <div style="margin-bottom:6px">
+        <input type="text" value="${s.label}" placeholder="Label"
+               onchange="streamChange('${ctx}',${s.id},'label',this.value)"
+               style="font-family:var(--sans);font-size:13px;margin-bottom:6px">
+      </div>
+      <div style="margin-bottom:6px">
+        <select onchange="streamChange('${ctx}',${s.id},'codecId',this.value)">
+          ${codecHtml.replace(`value="${s.codecId}"`, `value="${s.codecId}" selected`)}
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Raster</div>
+          <select onchange="streamChange('${ctx}',${s.id},'rasterId',this.value)">
+            ${buildRasterOptions(s.rasterId)}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">FPS</div>
+          <select onchange="streamChange('${ctx}',${s.id},'fps',this.value)">
+            ${FPS_OPTS.replace(`value="${s.fps}"`, `value="${s.fps}" selected`)}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Stream Count</div>
+          <input type="number" value="${s.count}" min="1" max="99"
+                 onchange="streamChange('${ctx}',${s.id},'count',this.value)">
+        </div>
+      </div>
+      <div class="stream-bitrate-tag">${fmtBr(br)} × ${s.count} = ${fmtBr(br * s.count)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CALCULATIONS
+// ═══════════════════════════════════════════════════════════════
+
+function bitrate(s) {
+  const codec  = CODECS.find(c => c.id === s.codecId);
+  const raster = RASTERS.find(r => r.id === s.rasterId);
+  if (!codec || !raster) return 0;
+  if (codec.fixed) return codec.base;
+  const pxScale  = raster.px / REF_PX;
+  const fpsScale = s.fps / REF_FPS;
+  return codec.base * pxScale * fpsScale;
+}
+
+function fmtBr(mbps) {
+  if (mbps >= 1000) return (mbps / 1000).toFixed(2) + ' Gbps';
+  return mbps.toFixed(0) + ' Mbps';
+}
+
+function fmtGB(gb) {
+  if (gb >= 1024 * 1024) return (gb / 1024 / 1024).toFixed(2) + ' PB';
+  if (gb >= 1024)        return (gb / 1024).toFixed(2) + ' TB';
+  return gb.toFixed(1) + ' GB';
+}
+
+function gbPerHour(mbps) { return mbps * 3600 / 8 / 1024; }
+
+function getParams(prefix) {
+  const p = prefix ? prefix + '-' : '';
+  return {
+    hours:      parseFloat(document.getElementById(`${p}hours`).value)      || 8,
+    days:       parseInt(document.getElementById(`${p}days`).value)          || 1,
+    redundancy: parseInt(document.getElementById(`${p}redundancy`).value)    || 2,
+    overhead:   parseFloat(document.getElementById(`${p}overhead`).value)   || 1.2,
+  };
+}
+
+function buildSectionHTML(title, accentClass, streams, params) {
+  const { hours, days, redundancy, overhead } = params;
+  if (!streams.length) return '';
+
+  let totalBrMbps = 0;
+  const rowData = streams.map((s, i) => {
+    const br      = bitrate(s);
+    const brTotal = br * s.count;
+    totalBrMbps  += brTotal;
+    const gbHr1       = gbPerHour(br);
+    const gbDay1      = gbHr1 * hours;
+    const gbTotalRaw  = gbDay1 * days * s.count;
+    const gbRedund    = gbTotalRaw * redundancy * overhead;
+    return {
+      s, br, brTotal, gbHr1, gbDay1, gbTotalRaw, gbRedund,
+      color: STREAM_COLORS[i % STREAM_COLORS.length],
+      codec:  CODECS.find(c => c.id === s.codecId),
+      raster: RASTERS.find(r => r.id === s.rasterId),
+    };
+  });
+
+  const totalGbRaw    = rowData.reduce((a, r) => a + r.gbTotalRaw, 0);
+  const totalGbRedund = rowData.reduce((a, r) => a + r.gbRedund,   0);
+  const totalGbDay    = rowData.reduce((a, r) => a + r.gbDay1 * r.s.count, 0);
+
+  let html = `
+  <div style="margin-bottom:8px;padding:10px 0 6px">
+    <span style="font-family:var(--cond);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text2);border-left:3px solid var(--${accentClass === 'green' ? 'accent' : accentClass === 'blue' ? 'accent2' : 'accent3'});padding-left:10px">${title}</span>
+  </div>
+  <div class="summary-grid">
+    <div class="summary-card ${accentClass}">
+      <div class="summary-label">Total bitrate</div>
+      <div class="summary-value">${fmtBr(totalBrMbps)}</div>
+      <div class="summary-sub">${streams.reduce((a,s)=>a+s.count,0)} active streams</div>
+    </div>
+    <div class="summary-card blue">
+      <div class="summary-label">Raw storage</div>
+      <div class="summary-value">${fmtGB(totalGbRaw)}</div>
+      <div class="summary-sub">${days} day${days>1?'s':''} × ${hours}h/day</div>
+    </div>
+    <div class="summary-card orange">
+      <div class="summary-label">With redundancy ×${redundancy}</div>
+      <div class="summary-value">${fmtGB(totalGbRedund)}</div>
+      <div class="summary-sub">+${((overhead-1)*100).toFixed(0)}% overhead</div>
+    </div>
+    <div class="summary-card purple">
+      <div class="summary-label">Per day (inc. redundancy)</div>
+      <div class="summary-value">${fmtGB(totalGbDay * redundancy * overhead)}</div>
+      <div class="summary-sub">all streams</div>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">Stream Breakdown — ${title}</div></div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Stream</th><th>Codec</th><th>Raster / FPS</th>
+        <th>Bitrate (×count)</th><th>Per hour</th><th>Per day</th>
+        <th>Total raw</th><th>Total + redundancy</th>
+      </tr></thead>
+      <tbody>`;
+
+  rowData.forEach((r, i) => {
+    html += `<tr>
+      <td><span class="color-dot" style="background:${r.color}"></span>${i+1}</td>
+      <td class="td-stream">${r.s.label}${r.s.count > 1 ? ` <span style="color:var(--text3)">×${r.s.count}</span>` : ''}</td>
+      <td class="td-codec">${r.codec ? r.codec.label : r.s.codecId}</td>
+      <td class="td-codec">${r.raster ? r.raster.label : r.s.rasterId} / ${r.s.fps}fps</td>
+      <td class="td-br">${fmtBr(r.br)}${r.s.count > 1 ? ` <span style="color:var(--text3)">→ ${fmtBr(r.brTotal)}</span>` : ''}</td>
+      <td class="td-hr">${fmtGB(r.gbHr1 * r.s.count)}</td>
+      <td class="td-hr">${fmtGB(r.gbDay1 * r.s.count)}</td>
+      <td class="td-total">${fmtGB(r.gbTotalRaw)}</td>
+      <td class="td-redund">${fmtGB(r.gbRedund)}</td>
+    </tr>`;
+  });
+
+  html += `      </tbody></table></div>
+  <div class="table-wrap" style="margin-bottom:24px">
+    <div class="table-header"><div class="table-title">Bitrate by stream — ${title}</div></div>
+    <div style="padding:16px">`;
+
+  rowData.forEach(r => {
+    const pct = totalBrMbps > 0 ? (r.brTotal / totalBrMbps) * 100 : 0;
+    html += `<div class="bw-row">
+      <div class="bw-label"><span class="color-dot" style="background:${r.color}"></span>${r.s.label}${r.s.count > 1 ? ` ×${r.s.count}` : ''}</div>
+      <div class="bw-bar-wrap"><div class="bw-bar" style="width:${pct.toFixed(1)}%;background:${r.color}"></div></div>
+      <div class="bw-val">${fmtBr(r.brTotal)}</div>
+    </div>`;
+  });
+
+  html += `    </div></div>
+  <div class="notes-box" style="margin-bottom:32px">
+    <strong>${title} — ingest bandwidth required:</strong> ${fmtBr(totalBrMbps)} sustained.
+    Storage write speed must match or exceed this figure.
+  </div>`;
+
+  return html;
+}
+
+function calc() {
+  // Update storage type notes
+  const storType   = document.getElementById('stor-type').value;
+  const ciStorType = document.getElementById('ci-stor-type').value;
+  document.getElementById('stor-note').textContent    = STOR_NOTES[storType]   || '';
+  document.getElementById('ci-stor-note').textContent = STOR_NOTES[ciStorType] || '';
+
+  const bbParams = getParams('');
+  const ciParams = getParams('ci');
+
+  const bbStreams = state.bb.streams;
+  const ciStreams = state.ci.streams;
+
+  const empty   = document.getElementById('empty-state');
+  const results = document.getElementById('results');
+
+  if (!bbStreams.length && !ciStreams.length) {
+    empty.style.display  = 'block';
+    results.style.display = 'none';
+    return;
+  }
+  empty.style.display  = 'none';
+  results.style.display = 'block';
+
+  let html = '';
+  html += buildSectionHTML('Baseband Channels', 'green', bbStreams, bbParams);
+  html += buildSectionHTML('Card Ingest',       'blue',  ciStreams, ciParams);
+
+  // ── COMBINED GRAND TOTAL (if both have streams) ──
+  if (bbStreams.length && ciStreams.length) {
+    const bbRaw    = bbStreams.reduce((a,s) => { const br=bitrate(s); return a + gbPerHour(br)*bbParams.hours*bbParams.days*s.count; }, 0);
+    const ciRaw    = ciStreams.reduce((a,s) => { const br=bitrate(s); return a + gbPerHour(br)*ciParams.hours*ciParams.days*s.count; }, 0);
+    const bbRedund = bbStreams.reduce((a,s) => { const br=bitrate(s); return a + gbPerHour(br)*bbParams.hours*bbParams.days*s.count*bbParams.redundancy*bbParams.overhead; }, 0);
+    const ciRedund = ciStreams.reduce((a,s) => { const br=bitrate(s); return a + gbPerHour(br)*ciParams.hours*ciParams.days*s.count*ciParams.redundancy*ciParams.overhead; }, 0);
+    html += `<div class="table-wrap">
+      <div class="table-header"><div class="table-title" style="color:var(--accent)">Combined Grand Total</div></div>
+      <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="summary-label">Total raw (both sections)</div>
+          <div style="font-family:var(--mono);font-size:22px;color:var(--text)">${fmtGB(bbRaw + ciRaw)}</div>
+        </div>
+        <div>
+          <div class="summary-label">Total with redundancy</div>
+          <div style="font-family:var(--mono);font-size:22px;color:var(--accent)">${fmtGB(bbRedund + ciRedund)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  results.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SAVE / LOAD / EXPORT
+// ═══════════════════════════════════════════════════════════════
+
+function resetAll() {
+  if (!confirm('Reset all streams and parameters?')) return;
+  state.bb = { streams: [], nextId: 1 };
+  state.ci = { streams: [], nextId: 1 };
+  // Baseband params
+  document.getElementById('hours').value      = 8;
+  document.getElementById('days').value       = 1;
+  document.getElementById('redundancy').value = 2;
+  document.getElementById('overhead').value   = '1.2';
+  document.getElementById('stor-type').value  = 'online';
+  // Card Ingest params
+  document.getElementById('ci-hours').value      = 8;
+  document.getElementById('ci-days').value       = 1;
+  document.getElementById('ci-redundancy').value = 2;
+  document.getElementById('ci-overhead').value   = '1.2';
+  document.getElementById('ci-stor-type').value  = 'online';
+  renderStreamList('bb');
+  renderStreamList('ci');
+  calc();
+}
+
+function saveProject() {
+  const proj = {
+    v: 2,
+    bb: {
+      params: {
+        hours:      document.getElementById('hours').value,
+        days:       document.getElementById('days').value,
+        redundancy: document.getElementById('redundancy').value,
+        overhead:   document.getElementById('overhead').value,
+        storType:   document.getElementById('stor-type').value,
+      },
+      streams: state.bb.streams,
+      nextId:  state.bb.nextId,
+    },
+    ci: {
+      params: {
+        hours:      document.getElementById('ci-hours').value,
+        days:       document.getElementById('ci-days').value,
+        redundancy: document.getElementById('ci-redundancy').value,
+        overhead:   document.getElementById('ci-overhead').value,
+        storType:   document.getElementById('ci-stor-type').value,
+      },
+      streams: state.ci.streams,
+      nextId:  state.ci.nextId,
+    },
+  };
+  const blob = new Blob([JSON.stringify(proj, null, 2)], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'storage-calc.json';
+  a.click();
+}
+
+function loadProject() {
+  document.getElementById('file-input').click();
+}
+
+function loadFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const proj = JSON.parse(ev.target.result);
+      // Support v2 (dual section) format
+      if (proj.bb && proj.ci) {
+        ['bb','ci'].forEach(ctx => {
+          const pfx = ctx === 'ci' ? 'ci-' : '';
+          document.getElementById(`${pfx}hours`).value      = proj[ctx].params.hours;
+          document.getElementById(`${pfx}days`).value       = proj[ctx].params.days;
+          document.getElementById(`${pfx}redundancy`).value = proj[ctx].params.redundancy;
+          document.getElementById(`${pfx}overhead`).value   = proj[ctx].params.overhead;
+          document.getElementById(`${pfx}stor-type`).value  = proj[ctx].params.storType;
+          state[ctx].streams = proj[ctx].streams;
+          state[ctx].nextId  = proj[ctx].nextId || (Math.max(0, ...proj[ctx].streams.map(s => s.id)) + 1);
+          renderStreamList(ctx);
+        });
+      } else if (proj.params && proj.streams) {
+        // Legacy v1 — load into bb
+        document.getElementById('hours').value      = proj.params.hours;
+        document.getElementById('days').value       = proj.params.days;
+        document.getElementById('redundancy').value = proj.params.redundancy;
+        document.getElementById('overhead').value   = proj.params.overhead;
+        document.getElementById('stor-type').value  = proj.params.storType;
+        state.bb.streams = proj.streams;
+        state.bb.nextId  = proj.nextId || (Math.max(0, ...proj.streams.map(s => s.id)) + 1);
+        renderStreamList('bb');
+      } else throw new Error('Invalid file');
+      calc();
+    } catch(err) {
+      alert('Could not load file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function exportCSV() {
+  const rows = [['Section','Stream','Codec','Raster','FPS','Count','Bitrate (Mbps)','Total bitrate (Mbps)','GB/hr','GB/day','Total raw (GB)','Total + redundancy (GB)']];
+
+  ['bb','ci'].forEach(ctx => {
+    const pfx    = ctx === 'ci' ? 'ci-' : '';
+    const hours      = parseFloat(document.getElementById(`${pfx}hours`).value)      || 8;
+    const days       = parseInt(document.getElementById(`${pfx}days`).value)          || 1;
+    const redundancy = parseInt(document.getElementById(`${pfx}redundancy`).value)    || 2;
+    const overhead   = parseFloat(document.getElementById(`${pfx}overhead`).value)   || 1.2;
+    const section    = ctx === 'bb' ? 'Baseband Channels' : 'Card Ingest';
+
+    state[ctx].streams.forEach(s => {
+      const codec  = CODECS.find(c => c.id === s.codecId);
+      const raster = RASTERS.find(r => r.id === s.rasterId);
+      const br      = bitrate(s);
+      const brTotal = br * s.count;
+      const gbHr1   = gbPerHour(br) * s.count;
+      const gbDay1  = gbHr1 * hours;
+      const gbRaw   = gbDay1 * days;
+      const gbRed   = gbRaw * redundancy * overhead;
+      rows.push([
+        section, s.label,
+        codec  ? codec.label  : s.codecId,
+        raster ? raster.label : s.rasterId,
+        s.fps, s.count,
+        br.toFixed(0), brTotal.toFixed(0),
+        gbHr1.toFixed(2), gbDay1.toFixed(2),
+        gbRaw.toFixed(2), gbRed.toFixed(2),
+      ]);
+    });
+  });
+
+  const csv  = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'storage-calc.csv';
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OVERHEAD TOGGLE (works for both bb and ci sections)
+// ═══════════════════════════════════════════════════════════════
+
+const OH_OPTIONS = [
+  { value: '1.1',  pct: '10% — Minimal',       dec: '1.10 — Minimal'      },
+  { value: '1.15', pct: '15% — Standard',       dec: '1.15 — Standard'     },
+  { value: '1.2',  pct: '20% — Comfortable',    dec: '1.20 — Comfortable'  },
+  { value: '1.3',  pct: '30% — Conservative',   dec: '1.30 — Conservative' },
+  { value: '1.5',  pct: '50% — Very cautious',  dec: '1.50 — Very cautious'},
+];
+
+function toggleOverheadMode(ctx) {
+  const pfx       = ctx === 'ci' ? 'ci-' : '';
+  const isDecimal = document.getElementById(`${pfx}oh-toggle`).checked;
+  const select    = document.getElementById(`${pfx}overhead`);
+  const current   = select.value;
+  OH_OPTIONS.forEach((opt, i) => { select.options[i].text = isDecimal ? opt.dec : opt.pct; });
+  select.value = current;
+  document.getElementById(`${pfx}oh-lbl-pct`).classList.toggle('active', !isDecimal);
+  document.getElementById(`${pfx}oh-lbl-dec`).classList.toggle('active',  isDecimal);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+
+addStream('bb', { id: state.bb.nextId++, label: 'Set 1', codecId: 'prores_422hq', rasterId: 'HD_1080', fps: 25, count: 1 });
+</script>
+</body>
+</html>
