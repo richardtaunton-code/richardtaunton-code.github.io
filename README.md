@@ -1,1 +1,1 @@
-Early version of stand alopne calc for feedback
+Early version of stand alone calc for feedback
