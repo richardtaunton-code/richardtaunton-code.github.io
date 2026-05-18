@@ -263,12 +263,12 @@ body {
 }
 
 .stepper-btn {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   background: none;
   border: none;
   color: var(--blue);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 300;
   cursor: pointer;
   display: flex;
@@ -277,17 +277,33 @@ body {
   transition: opacity 0.15s;
   line-height: 1;
   padding-bottom: 1px;
+  -webkit-tap-highlight-color: transparent;
 }
-.stepper-btn:active { opacity: 0.5; }
+.stepper-btn:active { opacity: 0.4; background: var(--fill3); border-radius: 8px; }
 
 .stepper-val {
   font-size: 17px;
   font-weight: 400;
   color: var(--label);
-  min-width: 28px;
+  min-width: 36px;
   text-align: center;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.41px;
+  /* editable input styling */
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font);
+  padding: 0;
+  cursor: text;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.stepper-val::-webkit-inner-spin-button,
+.stepper-val::-webkit-outer-spin-button { -webkit-appearance: none; }
+.stepper-val:focus {
+  color: var(--blue);
+  border-bottom: 1.5px solid var(--blue);
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1635,9 +1651,9 @@ function renderCameraCard(cam) {
         <div class="row-sublabel">Same model &amp; config</div>
       </div>
       <div class="stepper">
-        <button class="stepper-btn" onclick="stepCamCount(${cam.id},-1)">−</button>
+        <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepCamCount(${cam.id},-1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
         <div class="stepper-val" id="camcount-${cam.id}">${cam.numCameras||1}</div>
-        <button class="stepper-btn" onclick="stepCamCount(${cam.id},1)">+</button>
+        <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepCamCount(${cam.id},1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
       </div>
     </div>
 
@@ -1841,9 +1857,9 @@ function calc() {
           <div class="row-icon" style="background:rgba(10,132,255,0.2)">📅</div>
           <div class="row-content"><div class="row-label">Days</div></div>
           <div class="stepper">
-            <button class="stepper-btn" onclick="step('days',-1)">−</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){step('days',-1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
             <div class="stepper-val" id="days-val">${G.days}</div>
-            <button class="stepper-btn" onclick="step('days',1)">+</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){step('days',1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
           </div>
         </div>
 
@@ -1851,9 +1867,9 @@ function calc() {
           <div class="row-icon" style="background:rgba(255,159,10,0.2)">⏱</div>
           <div class="row-content"><div class="row-label">Hours per day</div></div>
           <div class="stepper">
-            <button class="stepper-btn" onclick="step('hours',-0.5)">−</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){step('hours',-0.5)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
             <div class="stepper-val" id="hours-val">${G.hours}</div>
-            <button class="stepper-btn" onclick="step('hours',0.5)">+</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){step('hours',0.5)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
           </div>
         </div>
 
@@ -1864,9 +1880,9 @@ function calc() {
             <div class="row-sublabel">Identical backup sets</div>
           </div>
           <div class="stepper">
-            <button class="stepper-btn" onclick="step('redund',-1)">−</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){step('redund',-1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
             <div class="stepper-val" id="redund-val">${G.redund}</div>
-            <button class="stepper-btn" onclick="step('redund',1)">+</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){step('redund',1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
           </div>
         </div>
 
@@ -2550,9 +2566,9 @@ function renderMulticamCard(mc) {
               <div class="row-sublabel">Streams sharing this codec &amp; raster</div>
             </div>
             <div class="stepper">
-              <button class="stepper-btn" onclick="stepOutChannels(${mc.id},${out.id},-1)">−</button>
+              <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepOutChannels(${mc.id},${out.id},-1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
               <div class="stepper-val" id="ch-${out.id}">${channels}</div>
-              <button class="stepper-btn" onclick="stepOutChannels(${mc.id},${out.id},1)">+</button>
+              <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepOutChannels(${mc.id},${out.id},1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
             </div>
           </div>
         </div>`;
@@ -2697,18 +2713,18 @@ function calcMC() {
           <div class="row-icon" style="background:rgba(10,132,255,0.2)">📅</div>
           <div class="row-content"><div class="row-label">Days</div></div>
           <div class="stepper">
-            <button class="stepper-btn" onclick="stepMG('days',-1)">−</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepMG('days',-1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
             <div class="stepper-val" id="mc-days-val">${MG.days}</div>
-            <button class="stepper-btn" onclick="stepMG('days',1)">+</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepMG('days',1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
           </div>
         </div>
         <div class="list-row" style="border-top:0.5px solid var(--separator2)">
           <div class="row-icon" style="background:rgba(255,159,10,0.2)">⏱</div>
           <div class="row-content"><div class="row-label">Hours per day</div></div>
           <div class="stepper">
-            <button class="stepper-btn" onclick="stepMG('hours',-0.5)">−</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepMG('hours',-0.5)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
             <div class="stepper-val" id="mc-hours-val">${MG.hours}</div>
-            <button class="stepper-btn" onclick="stepMG('hours',0.5)">+</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepMG('hours',0.5)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
           </div>
         </div>
         <div class="list-row" style="border-top:0.5px solid var(--separator2)">
@@ -2718,9 +2734,9 @@ function calcMC() {
             <div class="row-sublabel">Identical backup sets</div>
           </div>
           <div class="stepper">
-            <button class="stepper-btn" onclick="stepMG('redund',-1)">−</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepMG('redund',-1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
             <div class="stepper-val" id="mc-redund-val">${MG.redund}</div>
-            <button class="stepper-btn" onclick="stepMG('redund',1)">+</button>
+            <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepMG('redund',1)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
           </div>
         </div>
         <div class="list-row" style="border-top:0.5px solid var(--separator2);flex-wrap:wrap;gap:8px">
@@ -3157,9 +3173,9 @@ function renderOnset() {
       <div class="onset-hours-row">
         <div class="onset-hours-label">Hours today</div>
         <div class="stepper">
-          <button class="stepper-btn" onclick="stepOnsetHours(${cam.id},-0.5)">−</button>
+          <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepOnsetHours(${cam.id},-0.5)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">−</button>
           <div class="stepper-val">${hours}</div>
-          <button class="stepper-btn" onclick="stepOnsetHours(${cam.id},0.5)">+</button>
+          <button class="stepper-btn" onpointerdown="holdStep(event,function(){stepOnsetHours(${cam.id},0.5)})" onpointerup="_clearHold()" onpointerleave="_clearHold()">+</button>
         </div>
       </div>
 
@@ -3221,12 +3237,51 @@ function renderOnset() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// STEPPER — press-and-hold + type-to-edit
+// ─────────────────────────────────────────────────────────────
+let _ht = null, _hi = null;
+
+function holdStep(e, fn, ...args) {
+  e.preventDefault();
+  _clearHold();
+  fn(...args);                                           // fire immediately
+  _ht = setTimeout(() => {
+    let rate = 100;
+    const fire = () => { fn(...args); _hi = setTimeout(fire, rate = Math.max(35, rate-7)); };
+    fire();
+  }, 400);
+}
+function _clearHold() { clearTimeout(_ht); clearTimeout(_hi); _ht=_hi=null; }
+
+// Make stepper value fields editable by tapping/clicking on them.
+// Called after every render — converts any fresh .stepper-val DIV to an INPUT.
+function enhanceStepperInputs() {
+  document.querySelectorAll('.stepper-val:not(input)').forEach(div => {
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.className = 'stepper-val';
+    inp.id = div.id;
+    if (div.getAttribute('style')) inp.setAttribute('style', div.getAttribute('style'));
+    inp.setAttribute('inputmode','decimal');
+    inp.value = div.textContent.replace(/[^\d.]/g,'');
+    // When user types a value, trigger a fake step to the target
+    inp.addEventListener('blur', () => {
+      const v = parseFloat(inp.value);
+      if (!isNaN(v)) inp.dispatchEvent(new CustomEvent('stepper-commit', {detail:v, bubbles:true}));
+    });
+    inp.addEventListener('keydown', e => { if (e.key==='Enter') inp.blur(); });
+    div.replaceWith(inp);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────
 setOverhead(1.2,'oh-std','20%');
 updateGrandTotal();
 calc();
 calcMC();
+setTimeout(enhanceStepperInputs, 50);
 
 </script>
 </body>
