@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>html{height:100%}
+/* Camera setup dialog */
+#cam-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center}
+#cam-overlay.open{display:flex}
+#cam-box{background:#1c1c26;border:1px solid #4a4a6a;border-radius:12px;width:400px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.7)}
+#cam-box h2{font-size:13px;font-weight:600;color:#c0b0e0;padding:14px 16px 10px;border-bottom:1px solid #2e2e3a;margin:0}
+.cam-body{padding:14px 16px}
+.cam-body p{font-size:12px;color:#9090b8;margin-bottom:14px;line-height:1.5}
+.cam-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cam-row label{font-size:12px;color:#b0b0d0;white-space:nowrap;min-width:100px}
+.cam-sel{flex:1;background:#12121a;border:1px solid #3a3a5a;border-radius:6px;color:#e0dfe8;font-size:12px;padding:6px 9px;outline:none}
+.cam-sel:focus{border-color:#5a5aaa}
+.cam-count{width:70px;background:#12121a;border:1px solid #3a3a5a;border-radius:6px;color:#e0dfe8;font-size:13px;padding:6px 10px;outline:none;text-align:center}
+.cam-count:focus{border-color:#5a5aaa}
+.cam-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px 14px}
+/* Router model dialog */
+#rtr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center}
+#rtr-overlay.open{display:flex}
+#rtr-box{background:#1c1c26;border:1px solid #4a4a6a;border-radius:12px;width:400px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.7)}
+#rtr-box h2{font-size:13px;font-weight:600;color:#c0b0e0;padding:14px 16px 10px;border-bottom:1px solid #2e2e3a;margin:0;flex-shrink:0}
+#rtr-list{overflow-y:auto;flex:1}
+.rtr-group-label{padding:7px 13px 3px;font-size:10px;font-weight:600;color:#6060a0;text-transform:uppercase;letter-spacing:.06em}
+.rtr-item{display:flex;align-items:center;gap:8px;padding:6px 13px;cursor:pointer;font-size:12px;color:#c0c0d8}
+.rtr-item:hover{background:#24243a}
+.rtr-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.rtr-sub{font-size:10px;color:#7070a0;margin-left:auto}
+.rtr-skip{display:flex;align-items:center;padding:9px 13px;font-size:11px;color:#5050a0;cursor:pointer;border-top:1px solid #2e2e3a}
+.rtr-skip:hover{background:#1e1e2a;color:#8080a0}
+
+/* Cable numbering dialog */
+#cable-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2500;display:none;align-items:center;justify-content:center}
+#cable-overlay.open{display:flex}
+#cable-box{background:#1c1c26;border:1px solid #4a4a6a;border-radius:12px;width:500px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.8)}
+#cable-box h2{font-size:13px;font-weight:600;color:#c0b0e0;padding:14px 16px 10px;border-bottom:1px solid #2e2e3a;margin:0;flex-shrink:0}
+#cable-box .cb-sub{font-size:11px;color:#6060a0;padding:8px 16px 0;line-height:1.5;flex-shrink:0}
+#cable-locs{overflow-y:auto;flex:1;padding:12px 16px}
+.cable-loc{background:#16161e;border:1px solid #2e2e3a;border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.cable-loc-title{font-size:11px;font-weight:600;color:#8080c0;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.cable-loc-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.cable-loc-row label{font-size:11px;color:#9090b0;min-width:110px;flex-shrink:0}
+.cable-loc-inp{flex:1;background:#12121a;border:1px solid #3a3a5a;border-radius:5px;color:#e0dfe8;font-size:12px;padding:5px 8px;outline:none}
+.cable-loc-inp:focus{border-color:#5a5aaa}
+.cable-loc-num{width:80px;background:#12121a;border:1px solid #3a3a5a;border-radius:5px;color:#e0dfe8;font-size:12px;padding:5px 8px;outline:none;text-align:center}
+.cable-loc-num:focus{border-color:#5a5aaa}
+#cable-box .cb-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 16px 14px;border-top:1px solid #2e2e3a;flex-shrink:0}
+.cb-note{font-size:10px;color:#5050a0}
+/* Router capacity warning in dist dialog */
+#dist-cap-warn{font-size:11px;border-radius:6px;padding:8px 10px;margin-bottom:10px;display:none;background:#2a0a1a;border:1px solid #7a2a4a;color:#f090b0;line-height:1.5}
+#dist-cap-warn.show{display:block}
+@keyframes routerPulse{0%,100%{filter:drop-shadow(0 0 4px #f090b0);}50%{filter:drop-shadow(0 0 10px #f090b0);}}
+.router-needs-upgrade rect{animation:routerPulse 1.4s ease-in-out infinite!important;stroke:#f090b0!important;stroke-width:2.5px!important;}
+.cap-change-btn{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:5px;background:#3a1a2a;border:1px solid #7a2a4a;color:#f090b0;font-size:11px;cursor:pointer;font-weight:500;}
+.cap-change-btn:hover{background:#4a2a3a;border-color:#c060a0;}
+
+/* Project format system */
+#fmt-badge{font-size:11px;padding:3px 9px;border-radius:10px;background:#1a2a4a;border:1px solid #3a4a7a;color:#8ab4f8;margin-left:6px;cursor:pointer;white-space:nowrap}
+#fmt-badge:hover{background:#2a3a6a}
+#fmt-badge.unset{background:#2a1a1a;border-color:#6a3a3a;color:#f09090}
+/* Format selection overlay */
+#fmt-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2500;display:none;align-items:center;justify-content:center}
+#fmt-overlay.open{display:flex}
+#fmt-box{background:#1c1c26;border:1px solid #4a4a6a;border-radius:12px;width:460px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.8)}
+#fmt-box h2{font-size:13px;font-weight:600;color:#c0b0e0;padding:14px 16px 10px;border-bottom:1px solid #2e2e3a;margin:0}
+.fmt-body{padding:16px}
+.fmt-body p{font-size:12px;color:#9090b8;margin-bottom:14px;line-height:1.5}
+.fmt-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.fmt-row label{font-size:12px;color:#b0b0d0;min-width:90px;flex-shrink:0}
+.fmt-sel{flex:1;background:#12121a;border:1px solid #3a3a5a;border-radius:6px;color:#e0dfe8;font-size:12px;padding:6px 9px;outline:none}
+.fmt-sel:focus{border-color:#5a5aaa}
+.fmt-preview{background:#12121a;border:1px solid #2a2a3a;border-radius:8px;padding:10px 12px;margin-top:4px;font-size:12px;color:#8ab4f8;line-height:1.7}
+.fmt-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px 14px}
+/* Compatibility warning on nodes */
+.compat-warn{display:none}
+.node-warn-badge{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#f0a020;color:#000;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
+/* Warning overlay for compatibility issues */
+#compat-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2500;display:none;align-items:center;justify-content:center}
+#compat-overlay.open{display:flex}
+#compat-box{background:#1c1c26;border:1px solid #6a4a1a;border-radius:12px;width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.8)}
+#compat-box h2{font-size:13px;font-weight:600;color:#f0c060;padding:14px 16px 10px;border-bottom:1px solid #3a2e1a;margin:0;flex-shrink:0}
+#compat-list{overflow-y:auto;flex:1;padding:12px 16px}
+.compat-item{background:#1e1a0e;border:1px solid #4a3a1a;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.compat-item-title{font-size:12px;font-weight:600;color:#f0c060;margin-bottom:4px}
+.compat-item-issue{font-size:11px;color:#c0a060;margin-bottom:6px;line-height:1.4}
+.compat-item-suggest{font-size:11px;color:#80b080;margin-bottom:6px}
+.compat-override-btn{font-size:11px;padding:3px 10px;border-radius:5px;background:#2a1a0a;border:1px solid #6a4a1a;color:#c0a060;cursor:pointer}
+.compat-override-btn:hover{background:#3a2a1a}
+.compat-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px 14px;border-top:1px solid #2e2e3a;flex-shrink:0}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broadcast Workflow Canvas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#141416;color:#e0dfe8;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#topbar{display:flex;flex-direction:column;gap:0;background:#1c1c20;border-bottom:1px solid #2e2e3a;flex-shrink:0}
+.toolbar-row{display:flex;align-items:center;gap:5px;padding:6px 12px;flex-wrap:wrap}
+.toolbar-row+.toolbar-row{border-top:1px solid #2a2a32;background:#1a1a1e}
+.row-label{font-size:10px;font-weight:600;color:#5050a0;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;margin-right:4px;min-width:52px}
+h1{font-size:13px;font-weight:600;color:#a09fc0;margin-right:6px;white-space:nowrap}
+.tb{font-size:12px;padding:5px 10px;border:1px solid #3a3a4a;border-radius:6px;background:#22222a;color:#d0cfe8;cursor:pointer;display:flex;align-items:center;gap:4px}
+.tb:hover{background:#2a2a36}
+.tb.on{background:#1e2a5a;border-color:#4a5aaa;color:#8ab4f8}
+.tb.del{color:#f48;border-color:#6a2a3a}
+.tb.del:hover{background:#3a1a22}
+.tb.ai{color:#6f8;border-color:#2a5a3a}
+.tdiv{width:1px;height:18px;background:#3a3a4a;margin:0 2px}
+#proj-name{font-size:12px;color:#8080c0;font-style:italic;margin-left:4px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#main{display:flex;gap:0;flex:1;overflow:hidden;min-height:0}
+#sb{width:160px;flex-shrink:0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;padding:8px 6px;background:#1c1c20;border-right:1px solid #2e2e3a}
+.cl{font-size:10px;font-weight:600;color:#6060a0;letter-spacing:.07em;padding:8px 4px 3px;text-transform:uppercase}
+.pn{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:5px;border:1px solid #2e2e3a;background:#22222a;cursor:grab;font-size:11px;color:#c0c0d8;user-select:none}
+.pn:hover{border-color:#4a4a60;background:#28283a}
+.pd{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+#cw{flex:1;position:relative;background:#18181e;overflow:hidden;touch-action:none}
+#cw::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,#2e2e3a 1px,transparent 1px);background-size:24px 24px;pointer-events:none;z-index:0}
+svg{position:relative;z-index:1;width:100%;height:100%;display:block}
+#zc{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:10}
+#zc button{width:28px;height:28px;border:1px solid #3a3a4a;border-radius:6px;background:#22222a;color:#c0c0d8;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+#zc button:hover{background:#2a2a36}
+#zl{font-size:10px;color:#8080a0;text-align:center;background:#22222a;border:1px solid #3a3a4a;border-radius:5px;padding:2px 4px}
+#stbar{font-size:11px;color:#7070a0;padding:5px 12px;background:#1c1c20;border-top:1px solid #2e2e3a;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Lasso */
+#lasso{position:absolute;pointer-events:none;border:1.5px dashed #6090f0;background:rgba(80,120,240,0.08);border-radius:2px;display:none;z-index:5}
+/* Context menu */
+#cm{position:fixed;z-index:3000;background:#1c1c24;border:1px solid #3a3a50;border-radius:10px;width:308px;max-height:460px;overflow-y:auto;display:none;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.ch{padding:9px 13px 7px;font-size:12px;font-weight:600;color:#c0b0e0;border-bottom:1px solid #2e2e3a;position:sticky;top:0;background:#1c1c24}
+.cg{padding:4px 0;border-bottom:1px solid #2a2a36}
+.cg:last-child{border-bottom:none}
+.cgl{padding:7px 13px 3px;font-size:10px;font-weight:600;color:#6060a0;text-transform:uppercase;letter-spacing:.06em}
+.ci{display:flex;align-items:center;gap:8px;padding:5px 13px;cursor:pointer;font-size:12px;color:#c0c0d8}
+.ci:hover{background:#24243a}
+.cd{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.cbadge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;flex-shrink:0}
+.csub{font-size:10px;color:#7070a0;margin-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.clink{display:flex;align-items:center;padding:9px 13px;font-size:11px;color:#6090e0;cursor:pointer;gap:6px;border-top:1px solid #2e2e3a}
+.clink:hover{background:#24243a}
+/* Project dialog */
+.pfbtn{font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid #3a3a5a;background:#22222a;color:#d0cfe8;cursor:pointer}
+.pfbtn:hover{background:#2a2a36}
+.pfbtn.primary{background:#2a3a7a;border-color:#4a5aaa;color:#a0c0f8}
+.pfbtn.primary:hover{background:#3a4a8a}
+#proj-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center}
+#proj-overlay.open{display:flex}
+#proj-box{background:#1c1c26;border:1px solid #4a4a6a;border-radius:12px;width:380px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.7)}
+#proj-box h2{font-size:13px;font-weight:600;color:#c0b0e0;padding:14px 16px 10px;border-bottom:1px solid #2e2e3a;margin:0}
+.proj-body{padding:14px 16px}
+.proj-body p{font-size:12px;color:#9090b8;margin-bottom:12px;line-height:1.5}
+.proj-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.proj-row label{font-size:12px;color:#b0b0d0;white-space:nowrap;min-width:90px}
+#proj-input{flex:1;background:#12121a;border:1px solid #3a3a5a;border-radius:6px;color:#e0dfe8;font-size:13px;padding:6px 10px;outline:none}
+#proj-input:focus{border-color:#5a5aaa}
+.proj-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px 14px}
+.proj-footer button{font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid #3a3a5a;background:#22222a;color:#d0cfe8;cursor:pointer}
+.proj-footer button:hover{background:#2a2a36}
+.proj-footer button.primary{background:#2a3a7a;border-color:#4a5aaa;color:#a0c0f8}
+.proj-footer button.primary:hover{background:#3a4a8a}
+.proj-tpl-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.proj-tpl-pill{font-size:10px;padding:2px 8px;border-radius:10px;background:#2a2a3a;color:#8080b0;border:1px solid #3a3a5a}
+/* Signal distance & camera-connect dialog */
+#dist-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center}
+#dist-overlay.open{display:flex}
+#dist-box{background:#1c1c26;border:1px solid #4a4a6a;border-radius:12px;width:420px;padding:0;box-shadow:0 12px 40px rgba(0,0,0,.7);overflow:hidden}
+#dist-box h2{font-size:13px;font-weight:600;color:#c0b0e0;padding:14px 16px 10px;border-bottom:1px solid #2e2e3a;margin:0}
+.dist-body{padding:14px 16px}
+.dist-body p{font-size:12px;color:#9090b8;margin-bottom:12px;line-height:1.5}
+.dist-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dist-row label{font-size:12px;color:#b0b0d0;white-space:nowrap;min-width:100px}
+#dist-input{flex:1;background:#12121a;border:1px solid #3a3a5a;border-radius:6px;color:#e0dfe8;font-size:13px;padding:6px 10px;outline:none}
+#dist-input:focus{border-color:#5a5aaa}
+.dist-unit{font-size:12px;color:#7070a0}
+.dist-warning{font-size:11px;border-radius:6px;padding:8px 10px;margin-bottom:10px;display:none;line-height:1.5}
+.dist-warning.yellow{background:#2a2000;border:1px solid #6a5000;color:#f0c060;display:block}
+.dist-warning.red{background:#2a0808;border:1px solid #6a1a1a;color:#f08080;display:block}
+.dist-warning.green{background:#082008;border:1px solid #1a5a1a;color:#80d080;display:block}
+.dist-section{margin-top:10px;padding-top:10px;border-top:1px solid #2e2e3a}
+.dist-section-title{font-size:11px;font-weight:600;color:#7070a0;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.dist-option{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:7px;border:1px solid #2e2e3a;margin-bottom:6px;cursor:pointer}
+.dist-option:hover{border-color:#4a4a6a;background:#1e1e2a}
+.dist-option.selected{border-color:#4a5aaa;background:#1a2040}
+.dist-option input[type=radio]{margin-top:1px;flex-shrink:0;accent-color:#6090f0}
+.dist-option-label{font-size:12px;color:#c0c0d8;font-weight:500}
+.dist-option-desc{font-size:11px;color:#6060a0;margin-top:2px;line-height:1.4}
+.dist-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px 14px}
+.dist-footer button{font-size:12px;padding:6px 14px;border-radius:6px;border:1px solid #3a3a5a;background:#22222a;color:#d0cfe8;cursor:pointer}
+.dist-footer button:hover{background:#2a2a36}
+.dist-footer button.primary{background:#2a3a7a;border-color:#4a5aaa;color:#a0c0f8}
+.dist-footer button.primary:hover{background:#3a4a8a}
+/* Storage Calc */
+#sc-overlay{position:absolute;inset:0;background:#141418;z-index:50;display:none;overflow-y:auto;padding:24px}
+#sc-overlay.open{display:block}
+.sc-title{font-size:18px;font-weight:700;color:#a0e8a0;margin-bottom:4px}
+.sc-sub{font-size:12px;color:#6060a0;margin-bottom:24px}
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px;margin-bottom:20px}
+.sc-card{background:#1c1c24;border:1px solid #2e2e3a;border-radius:10px;padding:16px}
+.sc-card h3{font-size:11px;font-weight:600;color:#6060a0;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.sc-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sc-row label{font-size:12px;color:#b0b0d0;min-width:110px;flex-shrink:0}
+.sc-sel,.sc-inp{flex:1;background:#12121a;border:1px solid #3a3a5a;border-radius:6px;color:#e0dfe8;font-size:12px;padding:6px 9px;outline:none;-webkit-appearance:none}
+.sc-sel:focus,.sc-inp:focus{border-color:#5a5aaa}
+.sc-unit{font-size:11px;color:#5050a0;white-space:nowrap}
+.sc-streams{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.sc-stream-row{display:grid;grid-template-columns:auto 1fr 1fr 1fr auto;gap:8px;align-items:center;background:#16161e;border:1px solid #2a2a3a;border-radius:8px;padding:8px 10px}
+.sc-stream-row select,.sc-stream-row input{background:#12121a;border:1px solid #3a3a5a;border-radius:5px;color:#e0dfe8;font-size:11px;padding:4px 7px;outline:none;width:100%}
+.sc-stream-num{font-size:11px;color:#5050a0;white-space:nowrap;min-width:20px}
+.sc-del-btn{background:none;border:none;color:#6a3a3a;cursor:pointer;font-size:14px;padding:0 2px}
+.sc-del-btn:hover{color:#f48}
+.sc-add-btn{margin-top:8px;font-size:11px;padding:5px 12px;border:1px dashed #3a3a5a;border-radius:6px;background:none;color:#6060a0;cursor:pointer;width:100%}
+.sc-add-btn:hover{border-color:#5a5aaa;color:#a0a0e0}
+.sc-results{max-width:900px;background:#1c2c1c;border:1px solid #2a4a2a;border-radius:10px;padding:16px;margin-bottom:16px}
+.sc-results h3{font-size:11px;font-weight:600;color:#4a8a4a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.sc-result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.sc-stat{background:#142014;border:1px solid #2a4a2a;border-radius:8px;padding:10px 12px}
+.sc-stat-val{font-size:20px;font-weight:700;color:#80e080;line-height:1}
+.sc-stat-label{font-size:10px;color:#5a8a5a;margin-top:3px}
+.sc-breakdown{max-width:900px;margin-top:12px}
+.sc-breakdown table{width:100%;border-collapse:collapse;font-size:11px}
+.sc-breakdown th{text-align:left;color:#5050a0;font-weight:600;padding:6px 8px;border-bottom:1px solid #2a2a3a;text-transform:uppercase;letter-spacing:.05em}
+.sc-breakdown td{padding:6px 8px;color:#b0b0d0;border-bottom:1px solid #1e1e2a}
+.sc-breakdown tr:last-child td{border-bottom:none}
+.sc-breakdown .highlight{color:#80e080;font-weight:600}
+.sc-warn{font-size:11px;color:#f0c060;background:#2a2000;border:1px solid #5a4000;border-radius:6px;padding:8px 10px;margin-top:10px;display:none}
+.sc-warn.show{display:block}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="toolbar-row" style="background:#16161e;border-bottom:1px solid #26263a">
+    <span class="row-label">Project</span>
+    <button class="tb" onclick="newProject()">✦ New</button>
+    <button class="tb" onclick="saveProject()">💾 Save</button>
+    <button class="tb" onclick="openProject()">📂 Open</button>
+    <button class="tb" id="btn-export-cable" onclick="exportCableSchedule()" style="display:none;border-color:#2a5a2a;color:#6f8">🔌 Export cable schedule</button>
+    <input type="file" id="proj-file-input" accept=".bcproj,.json" style="display:none" onchange="loadProjectFile(this)">
+    <div class="tdiv"></div>
+    <span id="proj-name">Untitled project</span>
+    <span id="fmt-badge" class="unset" onclick="openFmtDialog(false)" title="Click to set project format">⚠ No format set</span>
+  </div>
+  <div class="toolbar-row">
+    <span class="row-label">Templates</span>
+    <button class="tb" onclick="loadTpl('live')">▶ Live</button>
+    <button class="tb" onclick="loadTpl('post')">✂ Post</button>
+    <button class="tb" onclick="loadTpl('record')">⏺ Record</button>
+    <button class="tb" onclick="loadTpl('delivery')">🚀 Delivery</button>
+    <button class="tb" onclick="loadTpl('talkback')">🎙 Talkback</button>
+    <button class="tb" onclick="loadTpl('monitoring')">📺 Monitoring</button>
+    <button class="tb" onclick="loadTpl('power')">⚡ Power</button>
+    <button class="tb" onclick="loadTpl('storagecalc')" style="border-color:#2a5a3a;color:#6f8">🗄 Storage Calc</button>
+    <div class="tdiv"></div>
+    <button class="tb" onclick="fitV()">⛶ Fit</button>
+    <button class="tb" onclick="exportFlow()">↓ Export JSON</button>
+  </div>
+  <div class="toolbar-row">
+    <span class="row-label">Edit</span>
+    <button class="tb on" id="bsel" onclick="setM('sel')">↖ Select</button>
+    <button class="tb" id="bcon" onclick="setM('con')">→ Connect</button>
+    <div class="tdiv"></div>
+    <button class="tb del" onclick="delSel()">✕ Delete</button>
+    <button class="tb" id="bundo" onclick="undo()" title="Undo (Cmd/Ctrl+Z)" disabled style="opacity:.4">↩ Undo</button>
+    <button class="tb" onclick="clearAll()">⊘ Clear</button>
+  </div>
+</div>
+<div id="main">
+  <div id="sb"></div>
+  <div id="cw">
+    <svg id="cv" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M2 2L8 5L2 8" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <g id="vp"><g id="el"></g><g id="nl"></g></g>
+    </svg>
+    <div id="lasso"></div>
+    <div id="zc">
+      <button onclick="zBy(1.25)" title="Zoom in">+</button>
+      <div id="zl">100%</div>
+      <button onclick="zBy(.8)" title="Zoom out">−</button>
+      <button onclick="fitV()" title="Fit">⛶</button>
+    </div>
+    <div id="sc-overlay">
+      <div class="sc-title">🗄 Storage Calculator</div>
+      <div class="sc-sub">Calculate storage requirements for multi-stream broadcast recording workflows</div>
+      <div class="sc-grid">
+        <div class="sc-card" style="grid-column:1/-1">
+          <h3>Recording streams</h3>
+          <div class="sc-streams" id="sc-streams"></div>
+          <button class="sc-add-btn" onclick="scAddStream()">+ Add stream</button>
+        </div>
+        <div class="sc-card">
+          <h3>Duration &amp; recording</h3>
+          <div class="sc-row"><label>Recording hours</label><input class="sc-inp" id="sc-hours" type="number" min="0.1" max="720" value="8" step="0.5" oninput="scCalc()"/><span class="sc-unit">hrs</span></div>
+          <div class="sc-row"><label>Days / events</label><input class="sc-inp" id="sc-days" type="number" min="1" max="365" value="1" oninput="scCalc()"/><span class="sc-unit">days</span></div>
+          <div class="sc-row"><label>Redundancy copies</label><select class="sc-sel" id="sc-redundancy" onchange="scCalc()"><option value="1">1× — no redundancy</option><option value="2" selected>2× — primary + backup</option><option value="3">3× — primary + 2 backups</option></select></div>
+          <div class="sc-row"><label>Overhead buffer</label><select class="sc-sel" id="sc-overhead" onchange="scCalc()"><option value="1.0">None (exact)</option><option value="1.1">10% buffer</option><option value="1.2" selected>20% buffer</option><option value="1.3">30% buffer</option><option value="1.5">50% buffer</option></select></div>
+        </div>
+        <div class="sc-card">
+          <h3>Storage guidance</h3>
+          <div class="sc-row"><label>Primary storage</label><select class="sc-sel" id="sc-stor-type" onchange="scCalc()"><option value="online">Online (NAS/SAN)</option><option value="nearline">Nearline (LTO/slow)</option><option value="portable">Portable SSD/HDD</option><option value="cloud">Cloud storage</option></select></div>
+          <div id="sc-stor-note" style="font-size:11px;color:#6060a0;margin-top:8px;line-height:1.5"></div>
+        </div>
+      </div>
+      <div class="sc-results" id="sc-results" style="display:none"><h3>Storage requirements</h3><div class="sc-result-grid" id="sc-result-grid"></div></div>
+      <div class="sc-breakdown" id="sc-breakdown" style="display:none">
+        <table><thead><tr><th>#</th><th>Stream</th><th>Codec</th><th>Raster</th><th>FPS</th><th>Bitrate</th><th>Per hour</th><th>Total (1 day)</th><th>With redundancy</th></tr></thead><tbody id="sc-table-body"></tbody></table>
+        <div class="sc-warn" id="sc-warn"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="stbar">Click to select · click ⌄ to pick model · Shift+click multi-select · drag to move · lasso empty canvas to select area · Cmd+A all · Cmd+D duplicate · Cmd+Z undo</div>
+
+<div id="proj-overlay">
+  <div id="proj-box">
+    <h2 id="proj-title">✦ New project</h2>
+    <div class="proj-body">
+      <p id="proj-desc">Give your project a name. All template canvases will be cleared.</p>
+      <div class="proj-row"><label>Project name</label><input id="proj-input" type="text" placeholder="e.g. Studio A — Live Setup" maxlength="80"/></div>
+      <div class="proj-row">
+        <label>Raster</label>
+        <select class="cam-sel" id="proj-raster" style="flex:1">
+          <option value="">— set later —</option>
+          <option value="4K DCI">4K DCI (4096×2160)</option>
+          <option value="4K UHD">4K UHD (3840×2160)</option>
+          <option value="Full HD">Full HD 1080 (1920×1080)</option>
+          <option value="HD 720">HD 720 (1280×720)</option>
+          <option value="SD PAL">SD PAL (720×576)</option>
+        </select>
+        <select class="cam-sel" id="proj-fps" style="flex:1;margin-left:6px">
+          <option value="">— fps —</option>
+          <option value="23.98p">23.98p</option>
+          <option value="24p">24p</option>
+          <option value="25p">25p</option>
+          <option value="50i">50i</option>
+          <option value="50p">50p</option>
+          <option value="59.94i">59.94i</option>
+          <option value="59.94p">59.94p</option>
+        </select>
+      </div>
+      <div class="proj-tpl-list" id="proj-tpl-list"></div>
+    </div>
+    <div class="proj-footer">
+      <button onclick="projCancel()">Cancel</button>
+      <button class="primary" id="proj-confirm-btn" onclick="projConfirm()">Create project</button>
+    </div>
+  </div>
+</div>
+
+<div id="dist-overlay">
+  <div id="dist-box">
+    <h2 id="dist-title">📡 Signal run check</h2>
+    <div class="dist-body">
+      <p id="dist-desc">Enter the cable run distance between these two points.</p>
+      <div class="dist-row">
+        <label>Distance</label>
+        <input id="dist-input" type="number" min="1" max="10000" placeholder="e.g. 50"/>
+        <span class="dist-unit">metres</span>
+      </div>
+      <div id="dist-warning" class="dist-warning"></div>
+      <div id="dist-cap-warn" style="font-size:11px;border-radius:6px;padding:8px 10px;margin-bottom:10px;display:none;background:#2a0a1a;border:1px solid #7a2a4a;color:#f090b0;line-height:1.5"></div>
+      <div id="dist-bulk-section" class="dist-section" style="display:none">
+        <div class="dist-section-title">Other cameras detected</div>
+        <p style="font-size:11px;color:#7070a0;margin-bottom:8px;line-height:1.5" id="dist-bulk-desc"></p>
+        <div class="dist-option selected" id="dist-opt-single" onclick="distSelectOpt('single')">
+          <input type="radio" name="dist-bulk" value="single" checked>
+          <div><div class="dist-option-label">Connect this camera only</div><div class="dist-option-desc">Only connect the selected camera to the router.</div></div>
+        </div>
+        <div class="dist-option" id="dist-opt-all" onclick="distSelectOpt('all')">
+          <input type="radio" name="dist-bulk" value="all">
+          <div><div class="dist-option-label" id="dist-opt-all-label">Connect all cameras to this router</div><div class="dist-option-desc" id="dist-opt-all-desc">All cameras will be connected at the same distance.</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Inline router model picker — appears when capacity exceeded -->
+    <div id="dist-rtr-picker" style="display:none;border-top:1px solid #3a3a5a;max-height:260px;overflow-y:auto">
+      <div style="padding:8px 13px 4px;font-size:10px;font-weight:600;color:#8080a0;text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0;background:#1c1c26">Select a larger router</div>
+      <div id="dist-rtr-picker-list"></div>
+    </div>
+    <div class="dist-footer">
+      <button onclick="distCancel()">Cancel</button>
+      <button class="primary" id="dist-confirm-btn" onclick="distConfirm()">Connect</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Cable numbering dialog -->
+<div id="cable-overlay">
+  <div id="cable-box">
+    <h2>🔌 Cable numbering — location prefixes</h2>
+    <div class="cb-sub">Assign a name and starting cable number to each location in the signal path. Cables will be numbered sequentially from each starting point.</div>
+    <div id="cable-locs"></div>
+    <div class="cb-footer">
+      <span class="cb-note">Tip: 100s = camera positions, 200s = CTP, 300s = mux, 400s = demux, 500s = router</span>
+      <div style="display:flex;gap:8px">
+        <button class="pfbtn" onclick="cableCancel()">Cancel</button>
+        <button class="pfbtn primary" onclick="cableConfirm()">Apply &amp; Export Excel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Video format dialog -->
+<div id="fmt-overlay">
+  <div id="fmt-box">
+    <h2 id="fmt-title">📐 Project video format</h2>
+    <div class="fmt-body">
+      <p>Set the master video format for this project. All equipment models will be checked for compatibility.</p>
+      <div class="fmt-row">
+        <label>Raster</label>
+        <select class="fmt-sel" id="fmt-raster" onchange="updateFmtPreview()">
+          <option value="">— select —</option>
+          <option value="4K DCI">4K DCI (4096×2160)</option>
+          <option value="4K UHD">4K UHD (3840×2160)</option>
+          <option value="Full HD">Full HD 1080 (1920×1080)</option>
+          <option value="HD 720">HD 720 (1280×720)</option>
+          <option value="SD PAL">SD PAL (720×576)</option>
+          <option value="SD NTSC">SD NTSC (720×480)</option>
+        </select>
+      </div>
+      <div class="fmt-row">
+        <label>Frame rate</label>
+        <select class="fmt-sel" id="fmt-fps" onchange="updateFmtPreview()">
+          <option value="">— select —</option>
+          <option value="23.98p">23.98p</option>
+          <option value="24p">24p</option>
+          <option value="25p">25p</option>
+          <option value="50i">50i</option>
+          <option value="50p">50p</option>
+          <option value="59.94i">59.94i</option>
+          <option value="59.94p">59.94p</option>
+          <option value="60p">60p</option>
+        </select>
+      </div>
+      <div class="fmt-row">
+        <label>Colour space</label>
+        <select class="fmt-sel" id="fmt-colour">
+          <option value="Rec.709">Rec.709 (HD standard)</option>
+          <option value="Rec.2020">Rec.2020 (4K/HDR)</option>
+          <option value="Rec.2100 HLG">Rec.2100 HLG (HDR)</option>
+          <option value="Rec.2100 PQ">Rec.2100 PQ (HDR)</option>
+          <option value="Rec.601">Rec.601 (SD)</option>
+        </select>
+      </div>
+      <div id="fmt-preview" class="fmt-preview" style="display:none"></div>
+    </div>
+    <div class="fmt-footer">
+      <button class="pfbtn" onclick="fmtCancel()">Cancel</button>
+      <button class="pfbtn primary" onclick="fmtConfirm()">Set format &amp; validate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Compatibility issues dialog -->
+<div id="compat-overlay">
+  <div id="compat-box">
+    <h2 id="compat-title">⚠ Compatibility issues</h2>
+    <div id="compat-list"></div>
+    <div class="compat-footer">
+      <button class="pfbtn" onclick="compatClose()">Close</button>
+      <button class="pfbtn primary" onclick="compatAcceptAll()">Accept all warnings</button>
+    </div>
+  </div>
+</div>
+
+<div id="cm"></div>
+<!-- Camera setup dialog -->
+<div id="cam-overlay">
+  <div id="cam-box">
+    <h2>📷 Camera setup</h2>
+    <div class="cam-body">
+      <p>Choose the camera model and how many you want to add. They will be arranged in a neat vertical column.</p>
+      <div class="cam-row">
+        <label>Camera model</label>
+        <select class="cam-sel" id="cam-model-sel"></select>
+      </div>
+      <div class="cam-row">
+        <label>Number of cameras</label>
+        <input class="cam-count" id="cam-count-inp" type="number" min="1" max="24" value="1"/>
+      </div>
+    </div>
+    <div class="cam-footer">
+      <button class="pfbtn" onclick="camCancel()">Cancel</button>
+      <button class="pfbtn primary" onclick="camConfirm()">Add cameras</button>
+    </div>
+  </div>
+</div>
+
+<!-- Router model dialog -->
+<div id="rtr-overlay">
+  <div id="rtr-box">
+    <h2 id="rtr-title">🔀 Select router model</h2>
+    <div id="rtr-list"></div>
+  </div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// PRODUCT CATALOGUES
+// ═══════════════════════════════════════════════════════════════════
+const CAT={
+  cam:{t:'Select camera',u:'https://pro.sony/ue_US',g:[
+    {l:'Sony — Broadcast & Studio',f:'#1e3a7a',i:[
+      {n:'Sony HDC-5500',s:'Super 35 4K · global shutter',b:'Sony'},
+      {n:'Sony HDC-5500V',s:'HDC-5500 + variable ND',b:'Sony'},
+      {n:'Sony HDC-3500',s:'2/3" 4K · fiber/triax',b:'Sony'},
+      {n:'Sony HDC-3200',s:'2/3" 4K 3CMOS',b:'Sony'},
+      {n:'Sony HDC-P50A',s:'POV · SDI/IP · ST 2110',b:'Sony'},
+      {n:'Sony FR7',s:'Full-frame PTZ · 4K120',b:'Sony'},
+    ]},
+    {l:'ARRI — Cinema & Broadcast',f:'#3a2800',i:[
+      {n:'ARRI ALEXA 35',s:'S35 · 4.6K · 17 stops',b:'ARRI'},
+      {n:'ARRI ALEXA 35 Live',s:'Multicam broadcast',b:'ARRI'},
+      {n:'ARRI ALEXA Mini LF',s:'LF · 4.5K · 14 stops',b:'ARRI'},
+      {n:'ARRI AMIRA',s:'S35 · broadcast/doc',b:'ARRI'},
+    ]},
+    {l:'Blackmagic Design',f:'#0c3a1e',i:[
+      {n:'Blackmagic PYXIS 6K',s:'FF · 13 stops · BRAW',b:'BMD'},
+      {n:'Blackmagic PYXIS 12K',s:'FF · 16 stops · BRAW',b:'BMD'},
+      {n:'Blackmagic URSA Cine 12K',s:'12K LF · 16 stops',b:'BMD'},
+      {n:'Blackmagic Studio Camera 6K Pro',s:'12G-SDI · talkback',b:'BMD'},
+      {n:'Blackmagic URSA Broadcast G2',s:'B4 mount · 6K · IP',b:'BMD'},
+    ]},
+    {l:'Canon — Cinema EOS',f:'#3a0a0a',i:[
+      {n:'Canon EOS C70',s:'S35 · 4K DGO · RF',b:'Canon'},
+      {n:'Canon EOS C300 Mk III',s:'S35 · 4K · DGO',b:'Canon'},
+      {n:'Canon EOS C500 Mk II',s:'FF · 5.9K · EF/PL',b:'Canon'},
+      {n:'Canon EOS C400',s:'FF · 6K · RF',b:'Canon'},
+      {n:'Canon CR-N700',s:'4K PTZ · NDI · 15×',b:'Canon'},
+    ]},
+    {l:'Panasonic',f:'#1a1a3a',i:[
+      {n:'Panasonic VariCam 35',s:'S35 · 4K · V-Log',b:'Pana'},
+      {n:'Panasonic VariCam LT',s:'S35 · 4K · CineLive',b:'Pana'},
+      {n:'Panasonic AU-EVA1',s:'5.7K S35 · V-Log',b:'Pana'},
+      {n:'Panasonic AK-UC4000',s:'2/3" 4K studio',b:'Pana'},
+      {n:'Panasonic AW-UE160',s:'4K PTZ · NDI · 20×',b:'Pana'},
+    ]},
+  ]},
+  storage:{t:'Select shared storage',u:'https://www.avid.com/products/avid-nexis',g:[
+    {l:'Avid NEXIS — Online',f:'#2a1060',i:[
+      {n:'Avid NEXIS | PRO',s:'40–160TB · 24 clients',b:'NEXIS'},
+      {n:'Avid NEXIS | E2',s:'20–140TB · 600MB/s',b:'NEXIS'},
+      {n:'Avid NEXIS | E2 SSD',s:'19–38TB · 3GB/s',b:'NEXIS'},
+      {n:'Avid NEXIS | E4',s:'60–140TB · 25GB/s',b:'NEXIS'},
+      {n:'Avid NEXIS | E5',s:'Enterprise broadcast',b:'NEXIS'},
+      {n:'Avid NEXIS | E5 NL',s:'480TB–7.5PB nearline',b:'NEXIS'},
+    ]},
+    {l:'Synology FlashStation',f:'#0a1a3a',i:[
+      {n:'Synology FS2500',s:'24-bay · 10/25GbE',b:'Synology'},
+      {n:'Synology FS3410',s:'24-bay · 356K IOPS',b:'Synology'},
+      {n:'Synology FS6400',s:'24-bay · 40GbE',b:'Synology'},
+    ]},
+    {l:'EditShare EFS',f:'#0a2a10',i:[
+      {n:'EditShare EFS 200',s:'8–128TB · Flow MAM',b:'EFS'},
+      {n:'EditShare EFS 300',s:'28TB–5PB · Flow MAM',b:'EFS'},
+      {n:'EditShare EFS 450',s:'Enterprise broadcast',b:'EFS'},
+      {n:'EditShare Ultimate NVMe Lite',s:'14GB/s · 2RU',b:'EFS'},
+      {n:'EditShare Ultimate Hybrid NVMe',s:'NVMe + HDD tiered',b:'EFS'},
+    ]},
+  ]},
+  mixer:{t:'Select vision mixer',u:'https://www.blackmagicdesign.com/products/atem',g:[
+    {l:'vMix',f:'#1a4a2a',i:[
+      {n:'vMix Basic HD',s:'HD · stream',b:'vMix'},{n:'vMix HD',s:'NDI · SRT',b:'vMix'},
+      {n:'vMix 4K',s:'4K · replay',b:'vMix'},{n:'vMix Pro',s:'1000 inputs',b:'vMix'},
+    ]},
+    {l:'ATEM Mini',f:'#534ab7',i:[
+      {n:'ATEM Mini',s:'4× HDMI',b:'HD'},{n:'ATEM Mini Pro',s:'4× HDMI',b:'HD'},
+      {n:'ATEM Mini Extreme',s:'8× HDMI',b:'HD'},{n:'ATEM Mini Extreme ISO',s:'8× HDMI',b:'HD'},
+    ]},
+    {l:'ATEM SDI',f:'#534ab7',i:[
+      {n:'ATEM SDI',s:'4× SDI',b:'HD'},{n:'ATEM SDI Pro ISO',s:'4× SDI',b:'HD'},
+      {n:'ATEM SDI Extreme ISO',s:'8× SDI',b:'HD'},
+    ]},
+    {l:'ATEM Television Studio',f:'#534ab7',i:[
+      {n:'ATEM Television Studio HD8',s:'8× SDI',b:'HD'},
+      {n:'ATEM Television Studio HD8 ISO',s:'8× SDI',b:'HD'},
+      {n:'ATEM Television Studio 4K8',s:'8× 12G',b:'4K'},
+    ]},
+    {l:'ATEM Constellation HD',f:'#534ab7',i:[
+      {n:'ATEM 1 M/E Constellation HD',s:'10× SDI',b:'HD'},
+      {n:'ATEM 2 M/E Constellation HD',s:'20× SDI',b:'HD'},
+      {n:'ATEM 4 M/E Constellation HD',s:'40× SDI',b:'HD'},
+    ]},
+    {l:'ATEM Constellation 4K',f:'#534ab7',i:[
+      {n:'ATEM 1 M/E Constellation 4K',s:'10× 12G',b:'4K'},
+      {n:'ATEM 2 M/E Constellation 4K',s:'20× 12G',b:'4K'},
+      {n:'ATEM 4 M/E Constellation 4K',s:'40× 12G',b:'4K'},
+      {n:'ATEM 4 M/E Constellation 4K Plus',s:'80× 12G',b:'4K'},
+    ]},
+  ]},
+  'sdi-rtr':{t:'Select SDI router',u:'https://www.blackmagicdesign.com/products/blackmagicvideohub',g:[
+    {l:'Blackmagic Videohub 12G',f:'#712b13',i:[
+      {n:'Videohub 10×10 12G',s:'10×10',b:'12G'},{n:'Videohub 20×20 12G',s:'20×20',b:'12G'},
+      {n:'Videohub 40×40 12G',s:'40×40',b:'12G'},{n:'Videohub 80×80 12G',s:'80×80',b:'12G'},
+      {n:'Videohub 120×120 12G',s:'120×120',b:'12G'},
+    ]},
+  ]},
+  'madi-rtr':{t:'Select MADI router',u:'https://www.blackmagicdesign.com/products/atem',g:[
+    {l:'ATEM MADI',f:'#712b13',i:[
+      {n:'ATEM Constellation HD — MADI',s:'32ch MADI',b:'HD'},
+      {n:'ATEM 4 M/E Constellation 4K Plus — MADI',s:'128ch MADI',b:'4K'},
+    ]},
+    {l:'Third-party',f:'#712b13',i:[
+      {n:'SSL System T MADI Router',s:'64ch MADI',b:'AES67'},
+      {n:'Lawo mc²56 MADI',s:'64ch MADI',b:'AES67'},
+    ]},
+  ]},
+  enc:{t:'Select encoder',u:'https://www.blackmagicdesign.com/products/blackmagicstreamingprocessors',g:[
+    {l:'vMix encoder',f:'#1a4a2a',i:[
+      {n:'vMix HD — stream',s:'H.264 · RTMP/SRT',b:'vMix'},
+      {n:'vMix 4K — stream',s:'H.264/H.265',b:'vMix'},
+      {n:'vMix Pro — stream',s:'FFMPEG · multi-dest',b:'vMix'},
+    ]},
+    {l:'Blackmagic',f:'#534ab7',i:[
+      {n:'Blackmagic Streaming Encoder HD',s:'H.264 · RTMP/SRT',b:'HD'},
+      {n:'Blackmagic Streaming Encoder 4K',s:'H.264/H.265',b:'4K'},
+      {n:'Web Presenter HD',s:'H.264 · RTMP/SRT',b:'HD'},
+      {n:'Web Presenter 4K',s:'H.264/H.265',b:'4K'},
+    ]},
+  ]},
+  replay:{t:'Select replay system',u:'https://evs.com',g:[
+    {l:'EVS',f:'#1a3a5c',i:[
+      {n:'EVS XT-VIA',s:'16+ HD · 6ch 4K',b:'EVS'},
+      {n:'EVS XT-VIA 8K',s:'2ch 8K · ST 2110',b:'EVS'},
+      {n:'EVS XT-GO',s:'Entry · HD/4K',b:'EVS'},
+      {n:'EVS XS-VIA',s:'Studio · loop rec',b:'EVS'},
+    ]},
+    {l:'SimplyLive / Riedel',f:'#2a1a4a',i:[
+      {n:'SimplyLive RiMotion R16',s:'16ch HD · 2RU',b:'SL'},
+      {n:'SimplyLive RiMotion R166',s:'16 HD or 6 UHD',b:'SL'},
+      {n:'SimplyLive Production Suite Flex',s:'SDI/NDI/SRT · SW',b:'SL'},
+    ]},
+    {l:'vMix Replay',f:'#1a4a2a',i:[
+      {n:'vMix 4K — Instant Replay',s:'8 HD · 240fps',b:'vMix'},
+      {n:'vMix Pro — Instant Replay',s:'8 HD + 2× 4K',b:'vMix'},
+    ]},
+  ]},
+  mam:{t:'Select recorder / MAM',u:'https://www.blackmagicdesign.com/products/hyperdeckstudio',g:[
+    {l:'HyperDeck',f:'#993c1d',i:[
+      {n:'HyperDeck Studio HD Mini',s:'3G-SDI · SD',b:'HD'},
+      {n:'HyperDeck Studio HD Plus',s:'6G-SDI · SSD',b:'HD'},
+      {n:'HyperDeck Studio 4K Pro',s:'12G-SDI · 10G-E',b:'4K'},
+      {n:'HyperDeck Extreme 8K',s:'CFast · NW',b:'8K'},
+    ]},
+    {l:'EVS',f:'#1a3a5c',i:[
+      {n:'EVS XT-VIA',s:'16+ HD · 6ch 4K',b:'EVS'},
+      {n:'EVS XT-GO',s:'Entry · HD/4K',b:'EVS'},
+      {n:'EVS XS-VIA',s:'Studio · loop rec',b:'EVS'},
+    ]},
+    {l:'Avid NEXIS',f:'#2a1060',i:[
+      {n:'Avid NEXIS | PRO',s:'40–160TB',b:'NEXIS'},
+      {n:'Avid NEXIS | E4',s:'60–140TB · 25GB/s',b:'NEXIS'},
+      {n:'Avid NEXIS | E5 NL',s:'480TB–7.5PB',b:'NEXIS'},
+    ]},
+    {l:'EditShare',f:'#0a2a10',i:[
+      {n:'EditShare EFS 300',s:'28TB–5PB · Flow',b:'EFS'},
+      {n:'EditShare EFS 450',s:'Enterprise',b:'EFS'},
+    ]},
+    {l:'Quadrus',f:'#2a1a4a',i:[
+      {n:'Quadrus Ingest & Transcode',s:'Avid-compatible',b:'QDR'},
+      {n:'Quadrus Shared Storage',s:'Avid bin locking',b:'QDR'},
+    ]},
+  ]},
+  cdn:{t:'Select CDN / OTT',u:'https://www.blackmagicdesign.com',g:[
+    {l:'Professional CDN',f:'#993c1d',i:[
+      {n:'Akamai',s:'Enterprise CDN',b:'CDN'},{n:'Fastly',s:'Edge delivery',b:'CDN'},
+      {n:'Cloudfront',s:'AWS CDN',b:'CDN'},
+    ]},
+    {l:'Broadcast / OTT',f:'#993c1d',i:[
+      {n:'Blackmagic Cloud',s:'Cloud + stream',b:'BMD'},
+      {n:'YouTube Live',s:'RTMP/HLS',b:'OTT'},{n:'Facebook Live',s:'RTMP',b:'OTT'},
+      {n:'Twitch',s:'RTMP',b:'OTT'},
+    ]},
+  ]},
+  tx:{t:'Select TX / playout',u:'https://www.blackmagicdesign.com/products/hyperdeckstudio',g:[
+    {l:'Blackmagic',f:'#993c1d',i:[
+      {n:'HyperDeck Studio 4K Pro',s:'ProRes playout',b:'4K'},
+      {n:'DaVinci Resolve Studio',s:'SW playout',b:'SW'},
+    ]},
+    {l:'Third-party TX',f:'#993c1d',i:[
+      {n:'Grass Valley Morpheus',s:'Broadcast automation',b:'TX'},
+      {n:'Vizrt Viz Engine',s:'Graphics + playout',b:'TX'},
+      {n:'Ross Inception',s:'CiaB',b:'TX'},
+    ]},
+  ]},
+  nle:{t:'Select NLE',u:'https://www.blackmagicdesign.com/products/davinciresolve',g:[
+    {l:'Blackmagic',f:'#0f6e56',i:[
+      {n:'DaVinci Resolve',s:'Free',b:'BMD'},
+      {n:'DaVinci Resolve Studio',s:'Paid · collab',b:'BMD'},
+    ]},
+    {l:'Third-party',f:'#0f6e56',i:[
+      {n:'Adobe Premiere Pro',s:'Subscription',b:'NLE'},
+      {n:'Avid Media Composer',s:'Subscription',b:'NLE'},
+      {n:'Apple Final Cut Pro',s:'One-off',b:'NLE'},
+      {n:'Grass Valley Edius',s:'One-off',b:'NLE'},
+    ]},
+  ]},
+  grade:{t:'Select colour grading',u:'https://www.blackmagicdesign.com/products/davinciresolve',g:[
+    {l:'Blackmagic',f:'#0f6e56',i:[
+      {n:'DaVinci Resolve',s:'Free · Color page',b:'BMD'},
+      {n:'DaVinci Resolve Studio',s:'Paid · HDR',b:'BMD'},
+    ]},
+    {l:'Third-party',f:'#0f6e56',i:[
+      {n:'Baselight',s:'FilmLight',b:'SW'},{n:'Nucoda',s:'Digital Vision',b:'SW'},
+    ]},
+  ]},
+  vfx:{t:'Select VFX / compositing',u:'https://www.blackmagicdesign.com/products/fusion',g:[
+    {l:'Blackmagic',f:'#0f6e56',i:[
+      {n:'Fusion Studio',s:'Node-based comp',b:'BMD'},
+      {n:'DaVinci Resolve (Fusion)',s:'Built-in',b:'BMD'},
+    ]},
+    {l:'Third-party',f:'#0f6e56',i:[
+      {n:'Foundry Nuke',s:'Industry standard',b:'SW'},
+      {n:'Adobe After Effects',s:'Motion graphics',b:'SW'},
+      {n:'Autodesk Flame',s:'High-end',b:'SW'},
+    ]},
+  ]},
+  cg:{t:'Select CG / graphics',u:'https://www.blackmagicdesign.com/products/fusion',g:[
+    {l:'Blackmagic',f:'#534ab7',i:[
+      {n:'Fusion Studio',s:'Full CG',b:'BMD'},
+      {n:'ATEM media pool',s:'Built-in stills',b:'BMD'},
+    ]},
+    {l:'Broadcast CG',f:'#534ab7',i:[
+      {n:'Vizrt Viz Trio',s:'Broadcast graphics',b:'CG'},
+      {n:'Ross Xpression',s:'Channel branding',b:'CG'},
+      {n:'Chyron Prime',s:'Live graphics',b:'CG'},
+      {n:'Singular.live',s:'Web OG',b:'CG'},
+    ]},
+  ]},
+  embedder:{t:'Select audio embedder',u:'https://www.blackmagicdesign.com/products/converters',g:[
+    {l:'Blackmagic',f:'#3c3489',i:[
+      {n:'Blackmagic Teranex Mini Audio to SDI 12G',s:'MADI/AES → SDI',b:'12G'},
+      {n:'Blackmagic Teranex Mini SDI to Audio 12G',s:'SDI → MADI/AES',b:'12G'},
+    ]},
+    {l:'Third-party',f:'#3c3489',i:[
+      {n:'Ensemble Designs BrightEye 4',s:'AES embed',b:'HD'},
+      {n:'Lawo V__remote4',s:'AES67',b:'IP'},
+    ]},
+  ]},
+  'fibre-mux':{t:'Select fibre transmitter / mux',u:'https://www.multidyne.com',g:[
+    {l:'Blackmagic Design',f:'#0c3a1e',i:[
+      {n:'Blackmagic Mini Converter SDI to Optical',s:'3G-SDI · SFP LC',b:'BMD'},
+      {n:'Blackmagic Teranex Mini SDI to Optical 12G',s:'12G-SDI · SFP LC',b:'BMD'},
+      {n:'Blackmagic Mini Converter Heavy Duty SDI to Optical',s:'3G ruggedised',b:'BMD'},
+    ]},
+    {l:'Multidyne',f:'#1a2a4a',i:[
+      {n:'Multidyne SilverBack SB-3650-T',s:'3G-SDI · SMPTE 311M',b:'MDY'},
+      {n:'Multidyne SilverBack SB-12G-T',s:'12G-SDI · SMPTE 311M',b:'MDY'},
+      {n:'Multidyne Nanofly NF-3G-T',s:'3G compact transmitter',b:'MDY'},
+      {n:'Multidyne Nanofly NF-12G-T',s:'12G compact transmitter',b:'MDY'},
+    ]},
+    {l:'Telecast / Belden',f:'#2a1a0a',i:[
+      {n:'Telecast Copperhead CH-3G-T',s:'3G-SDI · SMPTE 311M',b:'TCT'},
+      {n:'Telecast Copperhead CH-UHD-T',s:'12G-SDI · UHD',b:'TCT'},
+      {n:'Telecast Viper V12G-T',s:'12G · 4K UHD',b:'TCT'},
+    ]},
+    {l:'Cobalt Digital',f:'#0a2a3a',i:[
+      {n:'Cobalt 9923-TX-12G',s:'12G openGear card',b:'CBD'},
+      {n:'Cobalt 9922-TX',s:'3G openGear transmitter',b:'CBD'},
+    ]},
+    {l:'Decimator Design',f:'#2a2a0a',i:[
+      {n:'Decimator MD-DUCP 12G',s:'12G-SDI · fibre out',b:'DEC'},
+    ]},
+  ]},
+  'fibre-demux':{t:'Select fibre receiver / demux',u:'https://www.multidyne.com',g:[
+    {l:'Blackmagic Design',f:'#0c3a1e',i:[
+      {n:'Blackmagic Mini Converter Optical to SDI',s:'3G-SDI · SFP LC',b:'BMD'},
+      {n:'Blackmagic Teranex Mini Optical to SDI 12G',s:'12G-SDI · SFP LC',b:'BMD'},
+      {n:'Blackmagic Mini Converter Heavy Duty Optical to SDI',s:'3G ruggedised',b:'BMD'},
+    ]},
+    {l:'Multidyne',f:'#1a2a4a',i:[
+      {n:'Multidyne SilverBack SB-3650-R',s:'3G-SDI · SMPTE 311M',b:'MDY'},
+      {n:'Multidyne SilverBack SB-12G-R',s:'12G-SDI · SMPTE 311M',b:'MDY'},
+      {n:'Multidyne Nanofly NF-3G-R',s:'3G compact receiver',b:'MDY'},
+      {n:'Multidyne Nanofly NF-12G-R',s:'12G compact receiver',b:'MDY'},
+    ]},
+    {l:'Telecast / Belden',f:'#2a1a0a',i:[
+      {n:'Telecast Copperhead CH-3G-R',s:'3G-SDI · SMPTE 311M',b:'TCT'},
+      {n:'Telecast Copperhead CH-UHD-R',s:'12G-SDI · UHD',b:'TCT'},
+      {n:'Telecast Viper V12G-R',s:'12G · 4K UHD',b:'TCT'},
+    ]},
+    {l:'Cobalt Digital',f:'#0a2a3a',i:[
+      {n:'Cobalt 9923-RX-12G',s:'12G openGear card',b:'CBD'},
+      {n:'Cobalt 9922-RX',s:'3G openGear receiver',b:'CBD'},
+    ]},
+    {l:'Decimator Design',f:'#2a2a0a',i:[
+      {n:'Decimator MD-DUCP 12G',s:'12G-SDI · fibre in',b:'DEC'},
+    ]},
+  ]},
+  'ctp':{t:'Select Camera Termination Panel',u:'https://www.neutrik.com',g:[
+    {l:'Neutrik',f:'#1a1a3a',i:[
+      {n:'Neutrik opticalCON QUAD CTP',s:'4-ch SMPTE 311M',b:'NTK'},
+      {n:'Neutrik opticalCON DUO CTP',s:'2-ch SMPTE 311M',b:'NTK'},
+      {n:'Neutrik NA2-IO-DLINE',s:'Dual optical breakout',b:'NTK'},
+    ]},
+    {l:'Canare',f:'#2a1a1a',i:[
+      {n:'Canare FCA02P CTP',s:'SMPTE 311M · 2-ch',b:'CAN'},
+      {n:'Canare FCA04P CTP',s:'SMPTE 311M · 4-ch',b:'CAN'},
+      {n:'Canare MVHP-4 CTP',s:'4-ch hybrid panel',b:'CAN'},
+    ]},
+    {l:'Grass Valley / Belden',f:'#1a2a1a',i:[
+      {n:'GV Densité CTP-3901',s:'Camera panel · triax/fibre',b:'GV'},
+      {n:'GV LDX CTP',s:'LDX camera series',b:'GV'},
+    ]},
+    {l:'Multidyne',f:'#1a2a4a',i:[
+      {n:'Multidyne CTP-3G-QUAD',s:'4-ch 3G-SDI panel',b:'MDY'},
+      {n:'Multidyne CTP-12G-QUAD',s:'4-ch 12G-SDI panel',b:'MDY'},
+    ]},
+  ]},
+  'audio-mix':{t:'Select audio mixer',u:'https://www.blackmagicdesign.com/products/fairlight',g:[
+    {l:'Blackmagic / Fairlight',f:'#534ab7',i:[
+      {n:'Fairlight Audio Console',s:'DaVinci built-in',b:'BMD'},
+      {n:'ATEM Fairlight',s:'On-board mixing',b:'BMD'},
+    ]},
+    {l:'Broadcast consoles',f:'#534ab7',i:[
+      {n:'SSL System T',s:'IP / AoIP',b:'SSL'},
+      {n:'Lawo mc²56',s:'IP / MADI',b:'Lawo'},
+      {n:'Calrec Apollo',s:'Broadcast',b:'AoIP'},
+      {n:'Yamaha CL5',s:'Live audio',b:'Dante'},
+      {n:'DiGiCo SD7',s:'Live audio',b:'MADI'},
+      {n:'Allen & Heath dLive',s:'Live audio',b:'Dante'},
+    ]},
+  ]},
+};
+
+const BC={
+  HD:{bg:'#1d3a6b',tx:'#85b7eb'},'4K':{bg:'#3c1a6e',tx:'#afa9ec'},'8K':{bg:'#1a3e1a',tx:'#9fe1cb'},
+  '12G':{bg:'#3a2000',tx:'#fac775'},AES67:{bg:'#3a1400',tx:'#f0997b'},MADI:{bg:'#2c1a00',tx:'#ef9f27'},
+  BMD:{bg:'#0a2a0a',tx:'#9fe1cb'},CDN:{bg:'#1a1a2c',tx:'#afa9ec'},OTT:{bg:'#2a1a00',tx:'#fac775'},
+  TX:{bg:'#2a0a0a',tx:'#f09595'},NLE:{bg:'#1a2a1a',tx:'#c0dd97'},SW:{bg:'#1a1a1a',tx:'#b4b2a9'},
+  CG:{bg:'#1a001a',tx:'#ed93b1'},SSL:{bg:'#001a2a',tx:'#85b7eb'},Lawo:{bg:'#001a1a',tx:'#5dcaa5'},
+  AoIP:{bg:'#1a1a00',tx:'#ef9f27'},Dante:{bg:'#001a10',tx:'#97c459'},IP:{bg:'#001a2a',tx:'#85b7eb'},
+  '3G':{bg:'#2a1800',tx:'#fac775'},EVS:{bg:'#0a1f35',tx:'#7bafd4'},QDR:{bg:'#1a0a2e',tx:'#b89fd8'},
+  vMix:{bg:'#0a2a10',tx:'#97c459'},SL:{bg:'#1a0a30',tx:'#c0a8f0'},
+  MDY:{bg:'#0a1a3a',tx:'#80c0f0'},TCT:{bg:'#2a1a08',tx:'#f0c080'},
+  CBD:{bg:'#081a2a',tx:'#80d0f0'},DEC:{bg:'#1a1a08',tx:'#d0d080'},
+  NTK:{bg:'#0a0a2a',tx:'#a0a0f0'},CAN:{bg:'#2a0808',tx:'#f09090'},
+  GV:{bg:'#0a2a0a',tx:'#90d090'},
+  Sony:{bg:'#0a0a2a',tx:'#85b7eb'},ARRI:{bg:'#2a1a00',tx:'#fac775'},
+  Canon:{bg:'#2a0505',tx:'#f09595'},Pana:{bg:'#0a0a25',tx:'#afa9ec'},
+  NEXIS:{bg:'#150830',tx:'#c0a8f0'},Synology:{bg:'#041525',tx:'#7bafd4'},EFS:{bg:'#031a0a',tx:'#80d4a0'},
+};
+function bc(b){return BC[b]||{bg:'#1a1a1a',tx:'#b4b2a9'};}
+// ═══════════════════════════════════════════════════════════════════
+// NODE TYPES & SIDEBAR CATEGORIES
+// ═══════════════════════════════════════════════════════════════════
+const TYPES=[
+  {id:'cam',label:'Camera',cat:'source',fill:'#0c447c',fg:'#b5d4f4',m:true},
+  {id:'sdi-in',label:'SDI input',cat:'source',fill:'#0c447c',fg:'#b5d4f4'},
+  {id:'ip-stream',label:'IP stream',cat:'source',fill:'#0c447c',fg:'#b5d4f4'},
+  {id:'ingest',label:'File ingest',cat:'source',fill:'#0c447c',fg:'#b5d4f4'},
+  {id:'mic-set',label:'Set mic',cat:'mic',fill:'#26215c',fg:'#cecbf6'},
+  {id:'mic-lapel',label:'Lapel mic',cat:'mic',fill:'#26215c',fg:'#cecbf6'},
+  {id:'mic-cam',label:'Camera mic',cat:'mic',fill:'#26215c',fg:'#cecbf6'},
+  {id:'sdi-rtr',label:'SDI router',cat:'routing',fill:'#712b13',fg:'#f5c4b3',m:true},
+  {id:'madi-rtr',label:'MADI router',cat:'routing',fill:'#712b13',fg:'#f5c4b3',m:true},
+  {id:'ctp',label:'CTP',cat:'routing',fill:'#2a1a5a',fg:'#c0a8f0',m:true},
+  {id:'fibre-mux',label:'Fibre mux',cat:'routing',fill:'#1a3a3a',fg:'#80e4e4',m:true},
+  {id:'fibre-demux',label:'Fibre demux',cat:'routing',fill:'#1a3a3a',fg:'#80e4e4',m:true},
+  {id:'mixer',label:'Vision mixer',cat:'live',fill:'#534ab7',fg:'#cecbf6',m:true},
+  {id:'audio-mix',label:'Audio mixer',cat:'live',fill:'#534ab7',fg:'#cecbf6',m:true},
+  {id:'cg',label:'CG / graphics',cat:'live',fill:'#534ab7',fg:'#cecbf6',m:true},
+  {id:'embedder',label:'Embedder',cat:'live',fill:'#3c3489',fg:'#afa9ec',m:true},
+  {id:'enc',label:'Encoder',cat:'live',fill:'#534ab7',fg:'#cecbf6',m:true},
+  {id:'replay',label:'Replay system',cat:'replay',fill:'#1a3a5c',fg:'#7bafd4',m:true},
+  {id:'storage',label:'Shared storage',cat:'storage',fill:'#2a1060',fg:'#c0a8f0',m:true},
+  {id:'nle',label:'NLE / edit',cat:'post',fill:'#0f6e56',fg:'#9fe1cb',m:true},
+  {id:'grade',label:'Colour grade',cat:'post',fill:'#0f6e56',fg:'#9fe1cb',m:true},
+  {id:'vfx',label:'VFX / comp',cat:'post',fill:'#0f6e56',fg:'#9fe1cb',m:true},
+  {id:'qc',label:'QC review',cat:'post',fill:'#0f6e56',fg:'#9fe1cb'},
+  {id:'cdn',label:'CDN / OTT',cat:'delivery',fill:'#993c1d',fg:'#f5c4b3',m:true},
+  {id:'tx',label:'TX / playout',cat:'delivery',fill:'#993c1d',fg:'#f5c4b3',m:true},
+  {id:'mam',label:'MAM / record',cat:'delivery',fill:'#993c1d',fg:'#f5c4b3',m:true},
+  {id:'dist',label:'Distribution',cat:'delivery',fill:'#993c1d',fg:'#f5c4b3'},
+  {id:'intercom',label:'Intercom',cat:'comms',fill:'#3a1a5a',fg:'#d4b4f4'},
+  {id:'partyline',label:'Party line',cat:'comms',fill:'#3a1a5a',fg:'#d4b4f4'},
+  {id:'ifb',label:'IFB',cat:'comms',fill:'#3a1a5a',fg:'#d4b4f4'},
+  {id:'comms-rtr',label:'Comms router',cat:'comms',fill:'#3a1a5a',fg:'#d4b4f4'},
+  {id:'prod-desk',label:'Prod. desk',cat:'comms',fill:'#3a1a5a',fg:'#d4b4f4'},
+  {id:'beltpack',label:'Beltpack',cat:'comms',fill:'#3a1a5a',fg:'#d4b4f4'},
+  {id:'multiview',label:'Multiviewer',cat:'monitor',fill:'#1a3a2a',fg:'#a4e4c4'},
+  {id:'wfm',label:'Waveform mon.',cat:'monitor',fill:'#1a3a2a',fg:'#a4e4c4'},
+  {id:'preview',label:'Preview mon.',cat:'monitor',fill:'#1a3a2a',fg:'#a4e4c4'},
+  {id:'program',label:'Program mon.',cat:'monitor',fill:'#1a3a2a',fg:'#a4e4c4'},
+  {id:'confidence',label:'Confidence mon.',cat:'monitor',fill:'#1a3a2a',fg:'#a4e4c4'},
+  {id:'tallyproc',label:'Tally proc.',cat:'monitor',fill:'#1a3a2a',fg:'#a4e4c4'},
+  {id:'mains',label:'Mains / shore',cat:'power',fill:'#3a2a00',fg:'#f4d870'},
+  {id:'genset',label:'Generator',cat:'power',fill:'#3a2a00',fg:'#f4d870'},
+  {id:'ats',label:'ATS',cat:'power',fill:'#3a2a00',fg:'#f4d870'},
+  {id:'ups',label:'UPS',cat:'power',fill:'#3a2a00',fg:'#f4d870'},
+  {id:'pdu',label:'PDU',cat:'power',fill:'#3a2a00',fg:'#f4d870'},
+  {id:'psu',label:'PSU',cat:'power',fill:'#3a2a00',fg:'#f4d870'},
+];
+const CL={source:'Video sources',mic:'Microphones',routing:'Routing',live:'Live processing',
+  replay:'Replay systems',storage:'Shared storage',post:'Post production',delivery:'Delivery',
+  comms:'Talkback / comms',monitor:'Monitoring',power:'Power'};
+const CF={source:'#185fa5',mic:'#534ab7',routing:'#993c1d',live:'#534ab7',replay:'#1a3a5c',
+  storage:'#2a1060',post:'#0f6e56',delivery:'#993c1d',comms:'#3a1a5a',monitor:'#1a3a2a',power:'#3a2a00'};
+const CO=['source','mic','routing','live','replay','storage','post','delivery','comms','monitor','power'];
+const TPL_CATS={
+  live:['source','mic','routing','live','replay'],
+  post:['source','storage','post'],
+  record:['source','routing','live','storage','delivery'],
+  delivery:['storage','delivery'],
+  talkback:['comms','mic'],
+  monitoring:['monitor','source','routing'],
+  power:['power'],
+  storagecalc:[],
+};
+const ALL_TPLS=['live','post','record','delivery','talkback','monitoring','power','storagecalc'];
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let nodes=[],edges=[],uid=1,mode='sel',conn=null;
+let projectFormat={raster:'',fps:'',colour:'Rec.709'};
+let compatOverrides=new Set();
+let selN=new Set(),selE=new Set(),vx=0,vy=0,vz=1;
+let pan=false,psx=0,psy=0,pox=0,poy=0,sp=false,lp=null;
+let drag=null,dox=0,doy=0;
+let groupDrag=false,groupDragStart=null,groupDragOrigins=null;
+let wasSelectedBeforeClick=false,nodeMoved=false;
+let lasso=false,lassoSx=0,lassoSy=0;
+let activeTpl='live';
+let projectName='Untitled project';
+let projectStore={};
+let projDialogMode='new';
+const MAX_UNDO=40;
+let undoStack=[];
+
+const cvEl=document.getElementById('cv'),vp=document.getElementById('vp'),
+      nl=document.getElementById('nl'),el=document.getElementById('el'),
+      wrap=document.getElementById('cw'),cm=document.getElementById('cm'),
+      lassoEl=document.getElementById('lasso');
+function W(n){return Math.max(114,n.label.length*7.5+36);}
+const H=36;
+function st(t){document.getElementById('stbar').textContent=t;}
+function avp(){vp.setAttribute('transform',`translate(${vx},${vy}) scale(${vz})`);document.getElementById('zl').textContent=Math.round(vz*100)+'%';}
+function zBy(f,cx,cy){const r=wrap.getBoundingClientRect(),px=cx!==undefined?cx:r.width/2,py=cy!==undefined?cy:r.height/2,nz=Math.min(4,Math.max(.1,vz*f));vx=px-(px-vx)*(nz/vz);vy=py-(py-vy)*(nz/vz);vz=nz;avp();}
+function fitV(){if(!nodes.length){vx=0;vy=0;vz=1;avp();return;}const r=wrap.getBoundingClientRect(),pad=50,mx=Math.min(...nodes.map(n=>n.x)),my=Math.min(...nodes.map(n=>n.y)),xx=Math.max(...nodes.map(n=>n.x+W(n))),xy=Math.max(...nodes.map(n=>n.y+H)),cw=xx-mx,ch=xy-my,z=Math.min(3,Math.max(.1,Math.min((r.width-pad*2)/cw,(r.height-pad*2)/ch)));vx=r.width/2-(mx+cw/2)*z;vy=r.height/2-(my+ch/2)*z;vz=z;avp();}
+function s2c(sx,sy){const r=wrap.getBoundingClientRect();return{x:(sx-r.left-vx)/vz,y:(sy-r.top-vy)/vz};}
+
+// ── Undo ──────────────────────────────────────────────────────────
+function snapshot(){
+  undoStack.push(JSON.stringify({nodes:nodes.map(n=>({...n})),edges:edges.map(e=>({...e})),uid}));
+  if(undoStack.length>MAX_UNDO)undoStack.shift();
+  const btn=document.getElementById('bundo');if(btn){btn.disabled=false;btn.style.opacity='1';}
+}
+function undo(){
+  if(!undoStack.length)return;
+  const s=JSON.parse(undoStack.pop());
+  nodes=s.nodes;edges=s.edges;uid=s.uid;
+  nl.innerHTML='';el.innerHTML='';
+  selN=new Set();selE=new Set();
+  nodes.forEach(n=>rnN(n));reE();
+  const btn=document.getElementById('bundo');if(btn){btn.disabled=!undoStack.length;btn.style.opacity=undoStack.length?'1':'0.4';}
+  st(`Undo — ${undoStack.length} step${undoStack.length!==1?'s':''} remaining`);
+}
+
+// ── Wheel / touch / keys ──────────────────────────────────────────
+wrap.addEventListener('wheel',e=>{e.preventDefault();if(e.ctrlKey||e.metaKey){const r=wrap.getBoundingClientRect();zBy(e.deltaY<0?1.1:.9,e.clientX-r.left,e.clientY-r.top);}else{vx-=e.deltaX;vy-=e.deltaY;avp();}},{passive:false});
+wrap.addEventListener('touchstart',e=>{if(e.touches.length===2)lp=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);},{passive:true});
+wrap.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(lp){const r=wrap.getBoundingClientRect();zBy(d/lp,(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,(e.touches[0].clientY+e.touches[1].clientY)/2-r.top);}lp=d;}},{passive:false});
+wrap.addEventListener('touchend',e=>{if(e.touches.length<2)lp=null;},{passive:true});
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&e.target===document.body){sp=true;wrap.style.cursor='grab';e.preventDefault();}
+  if(e.key==='Delete'||e.key==='Backspace')delSel();
+  if((e.metaKey||e.ctrlKey)&&e.key==='z'){e.preventDefault();undo();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='a'){e.preventDefault();selectAll();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='d'){e.preventDefault();dupSel();}
+  if((e.metaKey||e.ctrlKey)&&e.key==='='){e.preventDefault();zBy(1.2);}
+  if((e.metaKey||e.ctrlKey)&&e.key==='-'){e.preventDefault();zBy(.8);}
+  if((e.metaKey||e.ctrlKey)&&e.key==='0'){e.preventDefault();fitV();}
+  if(e.key==='Escape'){
+    hideCM();
+    if(conn){hlN(conn,false);conn=null;st('Connection cancelled.');}
+    clearSel();
+  }
+});
+document.addEventListener('keyup',e=>{if(e.code==='Space'){sp=false;wrap.style.cursor='default';}});
+
+// ── Pan & lasso mousedown ─────────────────────────────────────────
+wrap.addEventListener('mousedown',e=>{
+  if(e.button===1||sp){e.preventDefault();pan=true;psx=e.clientX;psy=e.clientY;pox=vx;poy=vy;wrap.style.cursor='grabbing';return;}
+  if(e.button===0&&mode==='sel'&&(e.target===cvEl||e.target===vp||e.target.id==='el'||e.target.parentElement?.id==='el')){
+    const r=wrap.getBoundingClientRect();lassoSx=e.clientX-r.left;lassoSy=e.clientY-r.top;
+    lasso=true;lassoEl.style.display='block';lassoEl.style.left=lassoSx+'px';lassoEl.style.top=lassoSy+'px';
+    lassoEl.style.width='0';lassoEl.style.height='0';if(!e.shiftKey)clearSel();
+  }
+});
+document.addEventListener('mousemove',e=>{
+  if(pan){vx=pox+(e.clientX-psx);vy=poy+(e.clientY-psy);avp();return;}
+  if(lasso){const r=wrap.getBoundingClientRect();const cx=e.clientX-r.left,cy=e.clientY-r.top;const lx=Math.min(lassoSx,cx),ly=Math.min(lassoSy,cy),lw=Math.abs(cx-lassoSx),lh=Math.abs(cy-lassoSy);lassoEl.style.left=lx+'px';lassoEl.style.top=ly+'px';lassoEl.style.width=lw+'px';lassoEl.style.height=lh+'px';return;}
+  if(groupDrag&&groupDragStart&&groupDragOrigins){const dx=(e.clientX-groupDragStart.x)/vz,dy=(e.clientY-groupDragStart.y)/vz;selN.forEach(id=>{const node=nodes.find(n=>n.id===id);const orig=groupDragOrigins.get(id);if(!node||!orig)return;node.x=Math.round(orig.x+dx);node.y=Math.round(orig.y+dy);const g=document.getElementById('n-'+id);if(g)g.setAttribute('transform',`translate(${node.x},${node.y})`);});reE();return;}
+  if(!drag)return;
+  // First movement in connect mode — cancel pending connection so click-to-connect still works
+  if(!nodeMoved&&mode==='con'&&conn){hlN(conn,false);conn=null;}
+  nodeMoved=true;
+  const pt=s2c(e.clientX,e.clientY);drag.x=Math.round(pt.x-dox);drag.y=Math.round(pt.y-doy);
+  const g=document.getElementById('n-'+drag.id);if(g)g.setAttribute('transform',`translate(${drag.x},${drag.y})`);reE();
+});
+document.addEventListener('mouseup',e=>{
+  if(pan){pan=false;wrap.style.cursor=sp?'grab':'default';}
+  if(lasso){
+    lasso=false;lassoEl.style.display='none';
+    const r=wrap.getBoundingClientRect();const cx=e.clientX-r.left,cy=e.clientY-r.top;
+    const lx1=(Math.min(lassoSx,cx)-vx)/vz,ly1=(Math.min(lassoSy,cy)-vy)/vz;
+    const lx2=(Math.max(lassoSx,cx)-vx)/vz,ly2=(Math.max(lassoSy,cy)-vy)/vz;
+    if(Math.abs(lassoSx-cx)>4||Math.abs(lassoSy-cy)>4){
+      nodes.forEach(n=>{const overlaps=n.x<lx2&&n.x+W(n)>lx1&&n.y<ly2&&n.y+H>ly1;if(overlaps){if(e.shiftKey)selN.has(n.id)?selN.delete(n.id):selN.add(n.id);else selN.add(n.id);}});
+      updateSelVis();st(selN.size>0?`${selN.size} node${selN.size>1?'s':''} selected — drag to move`:'');
+    }
+  }
+  if(groupDrag){groupDrag=false;if(groupDragOrigins)snapshot();groupDragStart=null;groupDragOrigins=null;}
+  if(drag){if(nodeMoved)snapshot();drag=null;nodeMoved=false;}
+});
+
+// ── Selection helpers ─────────────────────────────────────────────
+function hlN(id,on){const g=document.getElementById('n-'+id);if(!g)return;g.querySelector('rect').setAttribute('stroke',on?'rgba(255,255,255,0.85)':'rgba(255,255,255,0.15)');g.querySelector('rect').setAttribute('stroke-width',on?'2.5':'1');}
+function updateSelVis(){nodes.forEach(n=>hlN(n.id,selN.has(n.id)));reE();}
+function clearSel(){selN=new Set();selE=new Set();updateSelVis();}
+function selectAll(){selN=new Set(nodes.map(n=>n.id));updateSelVis();st(`All ${selN.size} nodes selected`);}
+function dupSel(){
+  if(!selN.size)return;snapshot();const offset=24;const idMap=new Map();const newIds=new Set();
+  selN.forEach(id=>{const src=nodes.find(n=>n.id===id);if(!src)return;const dup={...src,id:'n'+(uid++),x:src.x+offset,y:src.y+offset};nodes.push(dup);rnN(dup);idMap.set(id,dup.id);newIds.add(dup.id);});
+  edges.forEach(e=>{if(selN.has(e.from)&&selN.has(e.to))edges.push({id:'e'+(uid++),from:idMap.get(e.from),to:idMap.get(e.to)});});
+  selN=newIds;updateSelVis();reE();st(`Duplicated ${newIds.size} node${newIds.size!==1?'s':''}`);
+}
+// ═══════════════════════════════════════════════════════════════════
+// SIGNAL DISTANCE CHECK — with bulk camera connect
+// ═══════════════════════════════════════════════════════════════════
+// SIGNAL DISTANCE CHECK + BULK CAMERA CONNECT + FIBRE MUX/DEMUX
+// ═══════════════════════════════════════════════════════════════════
+const SDI_LIMITS={
+  'SD-SDI': {ok:300,warn:400,fibre:500,label:'SD-SDI (270 Mb/s)'},
+  'HD-SDI': {ok:100,warn:150,fibre:200,label:'HD-SDI (1.485 Gb/s)'},
+  '3G-SDI': {ok:80, warn:120,fibre:150,label:'3G-SDI (2.97 Gb/s)'},
+  '6G-SDI': {ok:60, warn:80, fibre:100,label:'6G-SDI (6 Gb/s)'},
+  '12G-SDI':{ok:40, warn:60, fibre:80, label:'12G-SDI (12 Gb/s)'},
+};
+const DIST_SRC_CATS=['source','mic'];
+const DIST_DEST_CATS=['routing','live'];
+let pendingConn=null;
+let pendingBulkOpt='single';
+
+function getSignalType(node){
+  const lbl=node.label.toLowerCase();
+  if(lbl.includes('12g')||lbl.includes('ursa cine')||lbl.includes('pyxis 12k'))return '12G-SDI';
+  if(lbl.includes('6g'))return '6G-SDI';
+  if(lbl.includes('hdc-5')||lbl.includes('studio camera')||lbl.includes('pyxis 6k'))return '3G-SDI';
+  return 'HD-SDI';
+}
+function needsDistCheck(srcN,dstN){
+  // Trigger if either direction is camera→router or router→camera
+  return (DIST_SRC_CATS.includes(srcN.cat)&&DIST_DEST_CATS.includes(dstN.cat))
+      || (DIST_SRC_CATS.includes(dstN.cat)&&DIST_DEST_CATS.includes(srcN.cat));
+}
+
+function showDistDialog(fromId,toId){
+  const src=nodes.find(n=>n.id===fromId);
+  const dst=nodes.find(n=>n.id===toId);
+  const sigType=getSignalType(src);
+  const limits=SDI_LIMITS[sigType];
+
+  // Find other cameras on canvas not yet connected to this router
+  const alreadyConn=new Set(edges.filter(e=>e.to===toId).map(e=>e.from));
+  const otherCams=nodes.filter(n=>n.typeId==='cam'&&n.id!==fromId&&!alreadyConn.has(n.id));
+
+  pendingConn={fromId,toId,sigType,limits,otherCams};
+  pendingBulkOpt='single';
+
+  // Capacity check runs via updateCapWarning() when bulk option changes
+
+  document.getElementById('dist-title').textContent=`📡 Signal run: ${src.label} → ${dst.label}`;
+  document.getElementById('dist-desc').textContent=`Signal type: ${limits.label}. Enter the cable run distance. Safe coax limit: ${limits.ok}m — beyond ${limits.fibre}m fibre is required.`;
+  document.getElementById('dist-input').value='';
+  const warn=document.getElementById('dist-warning');
+  warn.className='dist-warning';warn.textContent='';
+
+  // Show bulk section if other cameras exist
+  const bulkSection=document.getElementById('dist-bulk-section');
+  if(otherCams.length>0){
+    bulkSection.style.display='block';
+    document.getElementById('dist-bulk-desc').textContent=
+      `${otherCams.length} other camera${otherCams.length>1?'s are':' is'} on the canvas and not yet connected to this router.`;
+    document.getElementById('dist-opt-all-label').textContent=
+      `Connect all ${otherCams.length+1} cameras to this router`;
+    document.getElementById('dist-opt-all-desc').textContent=
+      `All cameras connected at the same distance. If fibre is needed, a mux and demux will be inserted automatically.`;
+    // Reset to single
+    distSelectOpt('single');
+  } else {
+    bulkSection.style.display='none';
+  }
+
+  document.getElementById('dist-overlay').classList.add('open');
+  setTimeout(()=>{
+    document.getElementById('dist-input').focus();
+    updateCapWarning(); // set initial state
+  },60);
+}
+
+// Live colour warning as user types distance
+document.getElementById('dist-input').addEventListener('input',()=>{
+  if(!pendingConn)return;
+  const v=parseInt(document.getElementById('dist-input').value,10);
+  const warn=document.getElementById('dist-warning');
+  if(isNaN(v)||v<=0){warn.className='dist-warning';warn.textContent='';return;}
+  const {limits,sigType}=pendingConn;
+  if(v<=limits.ok){
+    warn.className='dist-warning green';
+    warn.textContent=`✓ ${v}m — within safe coax range for ${sigType}. Standard broadcast coax cable suitable.`;
+  } else if(v<=limits.warn){
+    warn.className='dist-warning yellow';
+    warn.textContent=`⚠ ${v}m — marginal for ${sigType}. Use high-grade RG-6 or RG-11 coax and test signal integrity on-site.`;
+  } else if(v<=limits.fibre){
+    warn.className='dist-warning yellow';
+    warn.textContent=`⚠ ${v}m — approaching the limit for ${sigType}. Consider a cable equaliser or signal extender. Fibre conversion recommended.`;
+  } else {
+    warn.className='dist-warning red';
+    warn.textContent=`✕ ${v}m — exceeds coax limit for ${sigType} (max ${limits.fibre}m). Fibre optic required. A Fibre mux and Fibre demux will be inserted automatically.`;
+  }
+});
+
+function distSelectOpt(opt){
+  pendingBulkOpt=opt;
+  ['single','all'].forEach(o=>{
+    const el=document.getElementById('dist-opt-'+o);
+    if(!el)return;
+    el.classList.toggle('selected',o===opt);
+    const radio=el.querySelector('input[type=radio]');
+    if(radio)radio.checked=(o===opt);
+  });
+  updateCapWarning();
+}
+
+function updateCapWarning(){
+  if(!pendingConn)return;
+  const {otherCams, limits}=pendingConn;
+  const capWarn=document.getElementById('dist-cap-warn');
+  const confirmBtn=document.getElementById('dist-confirm-btn');
+  const rtrNode=nodes.find(n=>n.id===pendingConn.toId);
+  if(!rtrNode||!capWarn)return;
+
+  const totalCams=pendingBulkOpt==='all' ? (otherCams.length+1) : 1;
+  const capCheck=checkRtrCapacity(rtrNode, totalCams);
+
+  const rtrG = document.getElementById('n-'+rtrNode.id);
+  if(capCheck && pendingBulkOpt==='all'){
+    capWarn.innerHTML = capCheck.message
+      + '<br><span class="cap-change-btn" onclick="changeRouterFromDialog()">🔀 Change router model →</span>';
+    capWarn.style.display='block';
+    // Highlight router node with pulse
+    if(rtrG) rtrG.classList.add('router-needs-upgrade');
+    if(confirmBtn){confirmBtn.disabled=true;confirmBtn.style.opacity='0.4';confirmBtn.title='Upgrade your router first';}
+  } else {
+    capWarn.style.display='none';
+    capWarn.innerHTML='';
+    // Remove highlight
+    if(rtrG) rtrG.classList.remove('router-needs-upgrade');
+    if(confirmBtn){confirmBtn.disabled=false;confirmBtn.style.opacity='1';confirmBtn.title='';}
+  }
+}
+
+function distCancel(){
+  document.getElementById('dist-overlay').classList.remove('open');
+  document.getElementById('dist-overlay').style.zIndex='2000';
+  if(pendingConn){
+    hlN(pendingConn.fromId,false);
+    const rtrG=document.getElementById('n-'+pendingConn.toId);
+    if(rtrG) rtrG.classList.remove('router-needs-upgrade');
+  }
+  pendingConn=null;conn=null;distDialogPaused=false;
+  const picker=document.getElementById('dist-rtr-picker');
+  if(picker)picker.style.display='none';
+}
+
+function distConfirm(){
+  if(!pendingConn)return;
+  const v=parseInt(document.getElementById('dist-input').value,10);
+  const {fromId,toId,sigType,limits,otherCams}=pendingConn;
+  // Remove router highlight
+  const rtrG=document.getElementById('n-'+toId);
+  if(rtrG) rtrG.classList.remove('router-needs-upgrade');
+  document.getElementById('dist-overlay').classList.remove('open');
+  document.getElementById('dist-overlay').style.zIndex='2000';
+  distDialogPaused=false;
+  pendingConn=null;
+
+  const src=nodes.find(n=>n.id===fromId);
+  const dst=nodes.find(n=>n.id===toId);
+  if(!src||!dst)return;
+
+  snapshot();
+
+  const needsFibre=!isNaN(v)&&v>limits.fibre;
+  const doAll=pendingBulkOpt==='all'&&otherCams&&otherCams.length>0;
+
+  // Build the full list of camera nodes to connect
+  // camList is array of node objects
+  const camList=[src,...(doAll?otherCams:[])];
+  const distLabel=!isNaN(v)&&v>0?`${v}m`:'';
+  const isWarn=!isNaN(v)&&v>limits.ok;
+
+  if(needsFibre){
+    // ── Fibre path layout with CTPs ────────────────────────────────
+    // [Cams] → [CTP-cam] → [Fibre mux] ~~fibre~~ [Fibre demux] → [CTP-rtr] → [Router]
+
+    const GAP     = 36;
+    const spacing = H + 14;
+    const totalH  = (camList.length - 1) * spacing;
+    const colCentreY = dst.y + H/2;
+    const colTopY    = colCentreY - totalH/2;
+
+    // Node widths
+    const ctpW   = Math.max(114, 'CTP'.length * 7.5 + 36);
+    const muxW   = Math.max(114, 'Fibre mux'.length  * 7.5 + 36);
+    const demuxW = Math.max(114, 'Fibre demux'.length * 7.5 + 36);
+    const maxCamW= Math.max(...camList.map(c=>W(c)));
+
+    // Horizontal positions — work backwards from router
+    const ctp2X  = dst.x   - ctpW   - GAP;  // CTP router-side
+    const demuxX = ctp2X   - demuxW - GAP;  // Fibre demux
+    const muxX   = demuxX  - muxW   - GAP;  // Fibre mux
+    const ctp1X  = muxX    - ctpW   - GAP;  // CTP camera-side
+    const camX   = ctp1X   - maxCamW- GAP;  // Cameras
+
+    // Position cameras
+    camList.forEach((cam, i) => {
+      cam.x = Math.round(camX);
+      cam.y = Math.round(colTopY + i * spacing);
+      const g = document.getElementById('n-' + cam.id);
+      if(g) g.setAttribute('transform', `translate(${cam.x},${cam.y})`);
+    });
+
+    // CTP camera-side (single node, centred on camera column)
+    const ctp1 = {
+      id:'n'+(uid++), typeId:'ctp', label:'CTP',
+      fill:'#2a1a5a', fg:'#c0a8f0', cat:'routing',
+      x:Math.round(ctp1X), y:Math.round(colCentreY - H/2), m:true
+    };
+    nodes.push(ctp1); rnN(ctp1);
+
+    // Fibre mux
+    const mux = {
+      id:'n'+(uid++), typeId:'fibre-mux', label:'Fibre mux',
+      fill:'#1a3a3a', fg:'#80e4e4', cat:'routing',
+      x:Math.round(muxX), y:Math.round(colCentreY - H/2), m:true
+    };
+    nodes.push(mux); rnN(mux);
+
+    // Fibre demux — same Y as router
+    const demux = {
+      id:'n'+(uid++), typeId:'fibre-demux', label:'Fibre demux',
+      fill:'#1a3a3a', fg:'#80e4e4', cat:'routing',
+      x:Math.round(demuxX), y:dst.y, m:true
+    };
+    nodes.push(demux); rnN(demux);
+
+    // CTP router-side — same Y as router
+    const ctp2 = {
+      id:'n'+(uid++), typeId:'ctp', label:'CTP',
+      fill:'#2a1a5a', fg:'#c0a8f0', cat:'routing',
+      x:Math.round(ctp2X), y:dst.y, m:true
+    };
+    nodes.push(ctp2); rnN(ctp2);
+
+    // ── Edges ────────────────────────────────────────────────────
+    // Each camera → CTP1
+    camList.forEach(cam => {
+      edges.push({id:'e'+(uid++), from:cam.id, to:ctp1.id, color:'#c0a8f0', label:''});
+    });
+    // CTP1 → Fibre mux
+    edges.push({id:'e'+(uid++), from:ctp1.id, to:mux.id, color:'#80e4e4'});
+    // Fibre mux → Fibre demux (dashed fibre run)
+    edges.push({
+      id:'e'+(uid++), from:mux.id, to:demux.id,
+      color:'#80e4e4', dash:true,
+      label: distLabel ? distLabel+' fibre' : 'fibre'
+    });
+    // Fibre demux → CTP2
+    edges.push({id:'e'+(uid++), from:demux.id, to:ctp2.id, color:'#80e4e4'});
+    // CTP2 → Router
+    edges.push({id:'e'+(uid++), from:ctp2.id, to:toId, color:'#c0a8f0'});
+
+    reE(); fitV();
+
+    // Open cable numbering dialog
+    lastCableData = buildCableData(camList, ctp1, mux, demux, ctp2, dst, sigType, distLabel);
+    document.getElementById('btn-export-cable').style.display='flex';
+
+    st(`Fibre layout: ${camList.length} cam${camList.length>1?'s':''} → CTP → Fibre mux → ${distLabel||'?'} fibre → Fibre demux → CTP → ${dst.label}`);
+  } else {
+    // ── Coax path ────────────────────────────────────────────────
+    if(doAll&&camList.length>1){
+      // Relayout cameras in a vertical column beside the router
+      const spacing=H+14;
+      const totalH=(camList.length-1)*spacing;
+      const camX=Math.round(dst.x-W(camList[0])-60);
+      camList.forEach((cam,i)=>{
+        cam.x=camX;
+        cam.y=Math.round(dst.y-totalH/2+i*spacing);
+        const g=document.getElementById('n-'+cam.id);
+        if(g)g.setAttribute('transform',`translate(${cam.x},${cam.y})`);
+      });
+      fitV();
+    }
+    // Connect all cameras directly to router
+    camList.forEach(cam=>{
+      edges.push({id:'e'+(uid++),from:cam.id,to:toId,
+        label:distLabel,color:isWarn?'#f0c060':undefined});
+    });
+    reE();
+    const msg=doAll?
+      `Connected ${camList.length} cameras → ${dst.label}${distLabel?' ('+distLabel+')':''}`:
+      `Connected: ${src.label} → ${dst.label}${distLabel?' ('+distLabel+')':''}`;
+    st(isWarn?`⚠ Marginal coax run. ${msg}`:msg);
+  }
+
+  hlN(fromId,false);conn=null;updateSelVis();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════════════════════════════════
+function showCM(cx,cy,node){
+  const c=CAT[node.typeId];
+  if(!c)return;
+  const sameTypeIds=[...selN].filter(id=>{const nd=nodes.find(n=>n.id===id);return nd&&nd.typeId===node.typeId;});
+  if(!sameTypeIds.includes(node.id))sameTypeIds.push(node.id);
+  const isMulti=sameTypeIds.length>1;
+  let h=`<div class="ch">${c.t}</div>`;
+  if(isMulti)h+=`<div style="padding:5px 13px 7px;font-size:11px;color:#f0c060;background:#2a2010;border-bottom:1px solid #3a3020;display:flex;align-items:center;gap:6px"><span>⚡</span><span>Applying to <strong>${sameTypeIds.length} selected nodes</strong></span></div>`;
+  c.g.forEach(g=>{
+    h+=`<div class="cg"><div class="cgl">${g.l}</div>`;
+    g.i.forEach(item=>{
+      const b=bc(item.b);
+      h+=`<div class="ci" data-name="${item.n.replace(/"/g,'&quot;')}"><span class="cd" style="background:${g.f}"></span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.n}</span><span class="csub">${item.s}</span><span class="cbadge" style="background:${b.bg};color:${b.tx}">${item.b}</span></div>`;
+    });
+    h+=`</div>`;
+  });
+  h+=`<div class="clink" data-url="${c.u}">↗ View full range online</div>`;
+  cm.innerHTML=h;
+  cm.querySelectorAll('.ci[data-name]').forEach(el=>{
+    el.addEventListener('mousedown',e=>{e.stopPropagation();e.preventDefault();selM(sameTypeIds,el.getAttribute('data-name'));});
+  });
+  cm.querySelector('.clink[data-url]')?.addEventListener('mousedown',e=>{e.stopPropagation();e.preventDefault();window.open(e.currentTarget.getAttribute('data-url'),'_blank');hideCM();});
+  // Position off-screen first, then measure, then place correctly
+  cm.style.left='-9999px';cm.style.top='0';
+  cm.style.display='block';
+  const mh=cm.scrollHeight,mw=308,vw=window.innerWidth,vh=window.innerHeight;
+  const left=Math.min(cx,vw-mw-8);
+  const top=Math.min(cy,Math.max(8,vh-mh-8));
+  cm.style.left=left+'px';cm.style.top=top+'px';
+}
+function hideCM(){cm.style.display='none';}
+function selM(nids,name){
+  const ids=Array.isArray(nids)?nids:[nids];snapshot();
+  ids.forEach(nid=>{const node=nodes.find(n=>n.id===nid);if(!node)return;node.label=name;const g=document.getElementById('n-'+nid);if(g)g.remove();rnN(node);});
+  reE();hideCM();st(ids.length>1?`Set ${ids.length} nodes to: ${name}`:`Set: ${name} — click ⌄ to change`);
+  // Dist dialog router change — recheck capacity
+  if(distDialogPaused && pendingConn){
+    distDialogPaused=false;
+    const distBox=document.getElementById('dist-overlay');
+    if(distBox)distBox.style.zIndex='2000';
+    const rtrNode=nodes.find(n=>n.id===pendingConn.toId);
+    if(rtrNode){const srcNode=nodes.find(n=>n.id===pendingConn.fromId);if(srcNode)document.getElementById('dist-title').textContent='📡 Signal run: '+srcNode.label+' → '+rtrNode.label;}
+    updateCapWarning();
+  }
+  // Compatibility check — inline, no wrapper needed
+  if(!projectFormat.raster||!projectFormat.fps)return;
+  ids.forEach(nid=>{compatOverrides.delete(nid);markNodeWarning(nid,!isModelCompatible(name),false);});
+  const bad=ids.filter(nid=>{const n=nodes.find(x=>x.id===nid);return n&&!isModelCompatible(name);});
+  if(bad.length)showCompatDialog(bad.map(nid=>({node:nodes.find(n=>n.id===nid),model:name,suggest:getCompatSuggestion(name)})));
+}
+document.addEventListener('mousedown',e=>{if(cm.style.display!=='none'&&!cm.contains(e.target))hideCM();});
+
+// ═══════════════════════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════════════════════
+function buildSB(cats){
+  cats=cats||TPL_CATS[activeTpl]||CO;
+  const side=document.getElementById('sb');side.innerHTML='';
+  cats.forEach(cat=>{
+    const ct=TYPES.filter(t=>t.cat===cat);if(!ct.length)return;
+    const l=document.createElement('div');l.className='cl';l.textContent=CL[cat];side.appendChild(l);
+    ct.forEach(nt=>{
+      const d=document.createElement('div');d.className='pn';d.draggable=true;
+      d.innerHTML=`<span class="pd" style="background:${nt.fill}"></span><span style="flex:1">${nt.label}</span>${nt.m?'<span style="font-size:9px;opacity:.5">⌄</span>':''}`;
+      if(nt.m)d.title='Click ⌄ on canvas to pick product model';
+      d.addEventListener('dragstart',e=>e.dataTransfer.setData('ntype',nt.id));
+      d.addEventListener('click',()=>{
+  if(nt.id==='cam'){showCamDialog();return;}
+  const r=wrap.getBoundingClientRect(),cx=(r.width/2-vx)/vz,cy=(r.height/2-vy)/vz;
+  const n=addN(nt.id,cx-W({label:nt.label})/2,cy-H/2);
+  if(n){
+    if(nt.id==='sdi-rtr'||nt.id==='madi-rtr'){showRtrDialog(n);}
+    else st(`Added: ${nt.label}${nt.m?' — click ⌄ to pick model':''}`);
+  }
+});
+      side.appendChild(d);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NODE RENDERING
+// ═══════════════════════════════════════════════════════════════════
+function addN(tid,x,y,autoSelect=true){
+  snapshot();const nt=TYPES.find(t=>t.id===tid);if(!nt)return null;
+  const n={id:'n'+(uid++),typeId:tid,label:nt.label,fill:nt.fill,fg:nt.fg,cat:nt.cat,x:Math.round(x),y:Math.round(y),m:!!nt.m};
+  nodes.push(n);rnN(n);
+  if(autoSelect){selN=new Set([n.id]);selE=new Set();updateSelVis();}
+  return n;
+}
+
+function rnN(n){
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.id='n-'+n.id;g.setAttribute('cursor','pointer');
+  const w=W(n);
+  const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rect.setAttribute('width',w);rect.setAttribute('height',H);rect.setAttribute('rx',7);
+  rect.setAttribute('fill',n.fill);rect.setAttribute('stroke','rgba(255,255,255,0.15)');rect.setAttribute('stroke-width','1');
+  const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+  tx.setAttribute('x',n.m?(w-22)/2:w/2);tx.setAttribute('y',H/2);
+  tx.setAttribute('text-anchor','middle');tx.setAttribute('dominant-baseline','central');
+  tx.setAttribute('fill',n.fg);tx.setAttribute('font-size','11.5');tx.setAttribute('font-weight','500');
+  tx.setAttribute('font-family','-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif');tx.textContent=n.label;
+  const pi=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  pi.setAttribute('cx',0);pi.setAttribute('cy',H/2);pi.setAttribute('r',4.5);
+  pi.setAttribute('fill','#18181e');pi.setAttribute('stroke',n.fill);pi.setAttribute('stroke-width','1.5');
+  const po=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  po.setAttribute('cx',w);po.setAttribute('cy',H/2);po.setAttribute('r',4.5);
+  po.setAttribute('fill',n.fill);po.setAttribute('stroke','#18181e');po.setAttribute('stroke-width','1.5');
+  g.appendChild(rect);g.appendChild(tx);g.appendChild(pi);g.appendChild(po);
+  if(n.m){
+    const ARROW_W=22;
+    const sep=document.createElementNS('http://www.w3.org/2000/svg','line');
+    sep.setAttribute('x1',w-ARROW_W);sep.setAttribute('y1',4);sep.setAttribute('x2',w-ARROW_W);sep.setAttribute('y2',H-4);
+    sep.setAttribute('stroke','rgba(255,255,255,0.12)');sep.setAttribute('stroke-width','1');
+    const arrowHit=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    arrowHit.setAttribute('x',w-ARROW_W);arrowHit.setAttribute('y',0);arrowHit.setAttribute('width',ARROW_W);arrowHit.setAttribute('height',H);
+    arrowHit.setAttribute('rx',6);arrowHit.setAttribute('fill','rgba(255,255,255,0.0)');arrowHit.setAttribute('cursor','pointer');
+    const ch=document.createElementNS('http://www.w3.org/2000/svg','text');
+    ch.setAttribute('x',w-ARROW_W/2);ch.setAttribute('y',H/2+1);ch.setAttribute('text-anchor','middle');ch.setAttribute('dominant-baseline','central');
+    ch.setAttribute('fill',n.fg);ch.setAttribute('font-size','11');ch.setAttribute('opacity','0.5');ch.setAttribute('pointer-events','none');ch.setAttribute('font-family','sans-serif');ch.textContent='⌄';
+    arrowHit.addEventListener('mouseenter',()=>arrowHit.setAttribute('fill','rgba(255,255,255,0.08)'));
+    arrowHit.addEventListener('mouseleave',()=>arrowHit.setAttribute('fill','rgba(255,255,255,0.0)'));
+    arrowHit.addEventListener('click',e=>{
+      e.stopPropagation();
+      // In connect mode, treat the arrow zone like the rest of the node — pass to onNC
+      if(mode==='con'){onNC(e,n);return;}
+      selN=new Set([n.id]);selE=new Set();updateSelVis();
+      wasSelectedBeforeClick=false;nodeMoved=false;showCM(e.clientX,e.clientY,n);
+    });
+    arrowHit.addEventListener('mousedown',e=>{
+      e.stopPropagation();
+      // In connect mode, pass through to onND so drag/connect works
+      if(mode==='con'){onND(e,n);return;}
+      selN=new Set([n.id]);selE=new Set();updateSelVis();
+    });
+    g.appendChild(sep);g.appendChild(arrowHit);g.appendChild(ch);
+  }
+  g.setAttribute('transform',`translate(${n.x},${n.y})`);
+  g.addEventListener('mousedown',e=>onND(e,n));
+  g.addEventListener('click',e=>onNC(e,n));
+  nl.appendChild(g);
+}
+
+function reE(){
+  el.innerHTML='';
+  edges.forEach(e=>{
+    const s=nodes.find(n=>n.id===e.from),d=nodes.find(n=>n.id===e.to);if(!s||!d)return;
+    const x1=s.x+W(s),y1=s.y+H/2,x2=d.x,y2=d.y+H/2,mx=(x1+x2)/2;
+    const strokeCol=selE.has(e.id)?'#5090f0':(e.color||CF[s.cat]||'#4a4a6a');
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.id='e-'+e.id;p.setAttribute('d',`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    p.setAttribute('fill','none');p.setAttribute('stroke',strokeCol);p.setAttribute('stroke-width',selE.has(e.id)?'2.5':'1.5');
+    if(e.dash)p.setAttribute('stroke-dasharray','6 3');p.setAttribute('opacity','.8');p.setAttribute('marker-end','url(#ah)');p.setAttribute('cursor','pointer');
+    p.addEventListener('click',ev=>onEC(ev,e));el.appendChild(p);
+    if(e.label){const lx=(x1+x2)/2,ly=(y1+y2)/2-8;const lt=document.createElementNS('http://www.w3.org/2000/svg','text');lt.setAttribute('x',lx);lt.setAttribute('y',ly);lt.setAttribute('text-anchor','middle');lt.setAttribute('font-size','9.5');lt.setAttribute('font-family','-apple-system,"Segoe UI",sans-serif');lt.setAttribute('fill',e.color||'#9090b8');lt.setAttribute('pointer-events','none');lt.textContent=e.label;el.appendChild(lt);}
+  });
+}
+
+function onND(e,n){
+  if(pan||sp)return;e.stopPropagation();
+  // In connect mode: arm drag so the node can be moved.
+  // If mouse moves → drag. If mouse stays still → click fires in onNC → connect.
+  if(mode==='con'){
+    drag=n;nodeMoved=false;
+    const pt=s2c(e.clientX,e.clientY);dox=pt.x-n.x;doy=pt.y-n.y;
+    return;
+  }
+  wasSelectedBeforeClick=selN.has(n.id)&&selN.size===1;
+  if(e.shiftKey){wasSelectedBeforeClick=false;if(selN.has(n.id))selN.delete(n.id);else selN.add(n.id);updateSelVis();st(`${selN.size} node${selN.size!==1?'s':''} selected`);if(selN.size>1){groupDrag=true;groupDragStart={x:e.clientX,y:e.clientY};groupDragOrigins=new Map(nodes.filter(nd=>selN.has(nd.id)).map(nd=>[nd.id,{x:nd.x,y:nd.y}]));}return;}
+  if(selN.size>1&&selN.has(n.id)){wasSelectedBeforeClick=false;groupDrag=true;groupDragStart={x:e.clientX,y:e.clientY};groupDragOrigins=new Map(nodes.filter(nd=>selN.has(nd.id)).map(nd=>[nd.id,{x:nd.x,y:nd.y}]));}
+  else{if(!e.shiftKey){selN=new Set([n.id]);selE=new Set();updateSelVis();st(`Selected: ${n.label}${n.m?' · click ⌄ to pick model':''} — Delete to remove`);}
+  drag=n;nodeMoved=false;const pt=s2c(e.clientX,e.clientY);dox=pt.x-n.x;doy=pt.y-n.y;}
+}
+
+function onNC(e,n){
+  e.stopPropagation();if(sp)return;
+  if(n.m&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(!selN.has(n.id)){selN=new Set([n.id]);updateSelVis();}showCM(e.clientX,e.clientY,n);return;}
+  if(mode==='con'){
+    if(!conn){
+      // First click — set source
+      conn=n.id;
+      hlN(n.id,true);
+      st(`Source: ${n.label} — now click the target node to connect`);
+    } else if(conn===n.id){
+      // Clicked same node — cancel
+      hlN(conn,false);conn=null;
+      st('Connection cancelled — click a source node to start again');
+    } else {
+      // Second click — attempt connection
+      const src=nodes.find(x=>x.id===conn);
+      if(!src){conn=null;return;}
+      // Normalise direction: camera always src, router always dst
+      const needsDist = needsDistCheck(src,n) || needsDistCheck(n,src);
+      if(needsDist){
+        const camNode = DIST_SRC_CATS.includes(src.cat) ? src : n;
+        const rtrNode = DIST_DEST_CATS.includes(n.cat)  ? n   : src;
+        hlN(conn,false);
+        showDistDialog(camNode.id, rtrNode.id);
+        conn=null;
+      } else {
+        snapshot();
+        edges.push({id:'e'+(uid++),from:conn,to:n.id});
+        reE();hlN(conn,false);
+        st(`Connected: ${src.label} → ${n.label}`);
+        conn=null;
+      }
+    }
+    return;
+  }
+  if(e.shiftKey){if(selN.has(n.id))selN.delete(n.id);else selN.add(n.id);updateSelVis();st(selN.size>1?`${selN.size} nodes selected`:`Selected: ${n.label}${n.m?' · click ⌄ to pick model':''}`);return;}
+  updateSelVis();st(`Selected: ${n.label}${n.m?' · click ⌄ to pick model':''} — Delete to remove`);
+}
+
+function onEC(e,edge){e.stopPropagation();selE=new Set([edge.id]);selN=new Set();updateSelVis();st('Connection selected — Delete to remove');}
+
+cvEl.addEventListener('click',e=>{
+  if(sp)return;
+  // Only act on background clicks — node clicks are handled by onNC via stopPropagation
+  // Check if click landed on a node element (rect, text, circle inside a <g> node)
+  let t=e.target;
+  while(t&&t!==cvEl){
+    if(t.id&&t.id.startsWith('n-'))return; // clicked on a node — onNC handled it
+    if(t.id&&t.id.startsWith('e-'))return; // clicked on an edge — onEC handled it
+    t=t.parentElement;
+  }
+  // True background click — in connect mode just remind user, don't cancel
+  if(conn){
+    st('Click a target node to complete the connection, or click the source node again to cancel');
+    return;
+  }
+  if(!e.shiftKey)clearSel();
+});
+
+wrap.addEventListener('dragover',e=>e.preventDefault());
+wrap.addEventListener('drop',e=>{
+  e.preventDefault();const tid=e.dataTransfer.getData('ntype');if(!tid)return;
+  const nt=TYPES.find(t=>t.id===tid);if(!nt)return;
+  const pt=s2c(e.clientX,e.clientY);
+  if(tid==='cam'){showCamDialog(pt.x,pt.y);return;}
+  const n=addN(tid,pt.x-W({label:nt.label})/2,pt.y-H/2);
+  if(n){
+    if(tid==='sdi-rtr'||tid==='madi-rtr'){showRtrDialog(n);}
+    else st(`Added: ${nt.label}`);
+  }
+});
+// ═══════════════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════════════
+function setM(m){mode=m;conn=null;nodes.forEach(n=>hlN(n.id,false));document.getElementById('bsel').classList.toggle('on',m==='sel');document.getElementById('bcon').classList.toggle('on',m==='con');wrap.style.cursor=m==='con'?'crosshair':'default';st(m==='con'?'Connect mode: click source then destination.':'Select mode: click to select · ⌄ to pick model · drag to move · lasso to box-select');}
+function delSel(){if(!selN.size&&!selE.size)return;snapshot();selN.forEach(id=>{nodes=nodes.filter(n=>n.id!==id);edges=edges.filter(e=>e.from!==id&&e.to!==id);const g=document.getElementById('n-'+id);if(g)g.remove();});selE.forEach(id=>{edges=edges.filter(e=>e.id!==id);});selN=new Set();selE=new Set();reE();st('Deleted.');}
+function clearAll(){if(nodes.length||edges.length)snapshot();nodes=[];edges=[];uid=1;nl.innerHTML='';el.innerHTML='';selN=new Set();selE=new Set();vx=0;vy=0;vz=1;avp();undoStack=[];const btn=document.getElementById('bundo');if(btn){btn.disabled=true;btn.style.opacity='0.4';}st('Canvas cleared.');}
+function exportFlow(){const d=JSON.stringify({nodes:nodes.map(n=>({id:n.id,type:n.typeId,label:n.label,category:n.cat})),edges:edges.map(e=>({from:e.from,to:e.to}))},null,2);const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(d);a.download='broadcast-workflow.json';a.click();st('Exported workflow JSON.');}
+function c2(a,b){edges.push({id:'e'+(uid++),from:a.id,to:b.id});}
+
+// ═══════════════════════════════════════════════════════════════════
+// PROJECT SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+function setProjName(name){projectName=name||'Untitled project';const el=document.getElementById('proj-name');if(el)el.textContent=projectName;document.title=projectName+' — Broadcast Canvas';}
+function captureCurrentCanvas(){projectStore[activeTpl]={nodes:nodes.map(n=>({...n})),edges:edges.map(e=>({...e})),uid,vx,vy,vz};}
+function restoreCanvas(tplId){const s=projectStore[tplId];nl.innerHTML='';el.innerHTML='';if(s){nodes=s.nodes.map(n=>({...n}));edges=s.edges.map(e=>({...e}));uid=s.uid;vx=s.vx;vy=s.vy;vz=s.vz;nodes.forEach(n=>rnN(n));reE();avp();}else{nodes=[];edges=[];uid=1;vx=0;vy=0;vz=1;avp();}selN=new Set();selE=new Set();undoStack=[];const btn=document.getElementById('bundo');if(btn){btn.disabled=true;btn.style.opacity='0.4';}}
+function newProject(){projDialogMode='new';document.getElementById('proj-title').textContent='✦ New project';document.getElementById('proj-desc').textContent='Give your project a name and set the video format. All equipment will be checked for compatibility.';const pr=document.getElementById('proj-raster');const pf=document.getElementById('proj-fps');if(pr)pr.value=projectFormat.raster||'';if(pf)pf.value=projectFormat.fps||'';document.getElementById('proj-input').value='';document.getElementById('proj-confirm-btn').textContent='Create project';const list=document.getElementById('proj-tpl-list');if(list)list.innerHTML=ALL_TPLS.map(t=>`<span class="proj-tpl-pill">${t}</span>`).join('');document.getElementById('proj-overlay').classList.add('open');setTimeout(()=>document.getElementById('proj-input').focus(),60);}
+function projCancel(){document.getElementById('proj-overlay').classList.remove('open');}
+function projConfirm(){
+  const name=document.getElementById('proj-input').value.trim()||'Untitled project';
+  const projRaster=document.getElementById('proj-raster')?.value||'';
+  const projFps=document.getElementById('proj-fps')?.value||'';
+  document.getElementById('proj-overlay').classList.remove('open');
+  if(projDialogMode==='new'){
+    setProjName(name);
+    projectFormat={raster:projRaster||'',fps:projFps||'',colour:'Rec.709'};
+    updateFmtBadge();
+    if(projRaster&&projFps){st('Project created: '+projRaster+' '+projFps);}
+    const blank=()=>({nodes:[],edges:[],uid:1,vx:0,vy:0,vz:1});
+    projectStore={};ALL_TPLS.forEach(t=>{projectStore[t]=blank();});
+    nodes=[];edges=[];uid=1;nl.innerHTML='';el.innerHTML='';selN=new Set();selE=new Set();vx=0;vy=0;vz=1;avp();undoStack=[];
+    const btn=document.getElementById('bundo');if(btn){btn.disabled=true;btn.style.opacity='0.4';}
+    activeTpl='live';buildSB(TPL_CATS['live']);
+    document.querySelectorAll('.toolbar-row .tb').forEach(b=>{b.classList.toggle('on',b.getAttribute('onclick')===`loadTpl('live')`);});
+    st(`New project "${name}" created — all ${ALL_TPLS.length} template canvases are blank.`);
+  }
+}
+function saveProject(){
+  captureCurrentCanvas();
+  const project={version:1,name:projectName,activeTpl,savedAt:new Date().toISOString(),canvases:projectStore};
+  const json=JSON.stringify(project,null,2);
+  const fname=(projectName.replace(/[^a-z0-9_\-\s]/gi,'').trim().replace(/\s+/g,'-')||'project')+'.bcproj';
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(json);a.download=fname;a.click();
+  st(`Project "${projectName}" saved as ${fname}`);
+}
+function openProject(){document.getElementById('proj-file-input').value='';document.getElementById('proj-file-input').click();}
+function loadProjectFile(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{const project=JSON.parse(ev.target.result);if(!project.canvases)throw new Error('Not a valid project file');
+    projectStore={};Object.keys(project.canvases).forEach(tpl=>{const s=project.canvases[tpl];projectStore[tpl]={nodes:(s.nodes||[]).map(n=>({...n})),edges:(s.edges||[]).map(e=>({...e})),uid:s.uid||1,vx:s.vx||0,vy:s.vy||0,vz:s.vz||1};});
+    setProjName(project.name||file.name.replace('.bcproj',''));const tpl=project.activeTpl||'live';activeTpl=tpl;buildSB(TPL_CATS[tpl]||TPL_CATS['live']);restoreCanvas(tpl);if(projectStore[tpl])fitV();
+    document.querySelectorAll('.toolbar-row .tb').forEach(b=>{b.classList.toggle('on',b.getAttribute('onclick')===`loadTpl('${tpl}')`);});
+    st(`Project "${projectName}" opened — ${Object.keys(projectStore).length} canvases loaded.`);
+    }catch(err){st(`Could not open project: ${err.message}`);}
+  };reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STORAGE CALCULATOR
+// ═══════════════════════════════════════════════════════════════════
+const SC_CODECS=[
+  {id:'unc_422_10',label:'Uncompressed 4:2:2 10-bit',base_1080_25:1118,notes:'Uncompressed'},
+  {id:'unc_422_8',label:'Uncompressed 4:2:2 8-bit',base_1080_25:894,notes:'Uncompressed'},
+  {id:'prores_4444xq',label:'ProRes 4444 XQ',base_1080_25:500,notes:'Apple ProRes'},
+  {id:'prores_4444',label:'ProRes 4444',base_1080_25:330,notes:'Apple ProRes'},
+  {id:'prores_422hq',label:'ProRes 422 HQ',base_1080_25:220,notes:'Apple ProRes'},
+  {id:'prores_422',label:'ProRes 422',base_1080_25:147,notes:'Apple ProRes'},
+  {id:'prores_422lt',label:'ProRes 422 LT',base_1080_25:102,notes:'Apple ProRes'},
+  {id:'prores_proxy',label:'ProRes Proxy',base_1080_25:45,notes:'Apple ProRes'},
+  {id:'dnxhd220',label:'DNxHD 220 (1080p)',base_1080_25:220,notes:'Avid DNx',fixed:true},
+  {id:'dnxhd145',label:'DNxHD 145 (1080p)',base_1080_25:145,notes:'Avid DNx',fixed:true},
+  {id:'dnxhd36',label:'DNxHD 36 (1080p)',base_1080_25:36,notes:'Avid DNx',fixed:true},
+  {id:'dnxhr_hqx',label:'DNxHR HQX',base_1080_25:490,notes:'Avid DNx'},
+  {id:'dnxhr_hq',label:'DNxHR HQ',base_1080_25:365,notes:'Avid DNx'},
+  {id:'dnxhr_sq',label:'DNxHR SQ',base_1080_25:240,notes:'Avid DNx'},
+  {id:'dnxhr_lb',label:'DNxHR LB',base_1080_25:95,notes:'Avid DNx'},
+  {id:'xdcam_hd50',label:'XDCAM HD 50 Mbps',base_1080_25:50,notes:'XDCAM',fixed:true},
+  {id:'xdcam_hd35',label:'XDCAM HD 35 Mbps',base_1080_25:35,notes:'XDCAM',fixed:true},
+  {id:'h264_50',label:'H.264 50 Mbps',base_1080_25:50,notes:'H.264',fixed:true},
+  {id:'h264_25',label:'H.264 25 Mbps',base_1080_25:25,notes:'H.264',fixed:true},
+  {id:'h264_8',label:'H.264 8 Mbps',base_1080_25:8,notes:'H.264',fixed:true},
+  {id:'h265_50',label:'H.265 50 Mbps',base_1080_25:50,notes:'H.265',fixed:true},
+  {id:'h265_25',label:'H.265 25 Mbps',base_1080_25:25,notes:'H.265',fixed:true},
+  {id:'h265_15',label:'H.265 15 Mbps',base_1080_25:15,notes:'H.265',fixed:true},
+  {id:'mpeg2_50',label:'MPEG-2 50 Mbps (4:2:2)',base_1080_25:50,notes:'MPEG-2',fixed:true},
+  {id:'mpeg2_25',label:'MPEG-2 25 Mbps',base_1080_25:25,notes:'MPEG-2',fixed:true},
+  {id:'braw_8_1',label:'BRAW 8:1',base_1080_25:80,notes:'Blackmagic RAW'},
+  {id:'braw_5_1',label:'BRAW 5:1',base_1080_25:130,notes:'Blackmagic RAW'},
+  {id:'braw_3_1',label:'BRAW 3:1',base_1080_25:215,notes:'Blackmagic RAW'},
+  {id:'arriraw',label:'ARRIRAW',base_1080_25:2800,notes:'ARRIRAW'},
+];
+const SC_RASTERS=[
+  {id:'sd_pal',label:'SD PAL (720×576)',pixels:720*576,ref:1920*1080},
+  {id:'hd_720',label:'HD 720p (1280×720)',pixels:1280*720,ref:1920*1080},
+  {id:'hd_1080',label:'HD 1080 (1920×1080)',pixels:1920*1080,ref:1920*1080},
+  {id:'uhd_4k',label:'4K UHD (3840×2160)',pixels:3840*2160,ref:1920*1080},
+  {id:'dci_4k',label:'4K DCI (4096×2160)',pixels:4096*2160,ref:1920*1080},
+  {id:'6k',label:'6K (6144×3240)',pixels:6144*3240,ref:1920*1080},
+  {id:'8k',label:'8K UHD (7680×4320)',pixels:7680*4320,ref:1920*1080},
+];
+const SC_FPS=[23.976,24,25,29.97,30,50,59.94,60,120];
+const SC_REF_FPS=25;
+let scStreams=[],scStreamId=0;
+
+function scGetCodecOptions(){let groups={};SC_CODECS.forEach(c=>{if(!groups[c.notes])groups[c.notes]=[];groups[c.notes].push(c);});let html='';Object.keys(groups).forEach(g=>{html+=`<optgroup label="${g}">`;groups[g].forEach(c=>{html+=`<option value="${c.id}">${c.label}</option>`;});html+=`</optgroup>`;});return html;}
+function scGetRasterOptions(){return SC_RASTERS.map(r=>`<option value="${r.id}">${r.label}</option>`).join('');}
+function scGetFpsOptions(){return SC_FPS.map(f=>`<option value="${f}"${f===25?' selected':''}>${f} fps</option>`).join('');}
+function scAddStream(codecId='prores_422hq',rasterId='hd_1080',fps=25,count=1){const id='ss'+(scStreamId++);scStreams.push({id,codecId,rasterId,fps,count});renderScStreams();scCalc();}
+function scRemoveStream(id){scStreams=scStreams.filter(s=>s.id!==id);renderScStreams();scCalc();}
+function renderScStreams(){
+  const cont=document.getElementById('sc-streams');if(!cont)return;cont.innerHTML='';
+  if(!scStreams.length){cont.innerHTML='<div style="font-size:12px;color:#4a4a6a;padding:4px 0">No streams — click "+ Add stream" to begin.</div>';return;}
+  scStreams.forEach((s,i)=>{
+    const div=document.createElement('div');div.className='sc-stream-row';
+    div.innerHTML=`<span class="sc-stream-num">#${i+1}</span><select onchange="scUpdate('${s.id}','codecId',this.value)">${scGetCodecOptions()}</select><select onchange="scUpdate('${s.id}','rasterId',this.value)">${scGetRasterOptions()}</select><select onchange="scUpdate('${s.id}','fps',parseFloat(this.value))">${scGetFpsOptions()}</select><div style="display:flex;align-items:center;gap:4px"><input type="number" min="1" max="64" value="${s.count}" style="width:44px" onchange="scUpdate('${s.id}','count',parseInt(this.value)||1)" title="Streams"/><span style="font-size:10px;color:#5050a0">ch</span></div><button class="sc-del-btn" onclick="scRemoveStream('${s.id}')">✕</button>`;
+    div.querySelector('select:nth-child(2)').value=s.codecId;
+    div.querySelector('select:nth-child(3)').value=s.rasterId;
+    div.querySelector('select:nth-child(4)').value=s.fps;
+    cont.appendChild(div);
+  });
+}
+function scUpdate(id,field,val){const s=scStreams.find(x=>x.id===id);if(s){s[field]=val;scCalc();}}
+function scBitrate(stream){const codec=SC_CODECS.find(c=>c.id===stream.codecId);const raster=SC_RASTERS.find(r=>r.id===stream.rasterId);if(!codec||!raster)return 0;if(codec.fixed)return codec.base_1080_25;const pixelScale=raster.pixels/raster.ref;const fpsScale=stream.fps/SC_REF_FPS;return codec.base_1080_25*pixelScale*fpsScale;}
+function scFmtSize(gb){if(gb>=1024*1024)return(gb/1024/1024).toFixed(2)+' PB';if(gb>=1024)return(gb/1024).toFixed(2)+' TB';return gb.toFixed(1)+' GB';}
+function scFmtBitrate(mbps){if(mbps>=1000)return(mbps/1000).toFixed(2)+' Gbps';return mbps.toFixed(0)+' Mbps';}
+function scCalc(){
+  const hours=parseFloat(document.getElementById('sc-hours')?.value)||8;
+  const days=parseInt(document.getElementById('sc-days')?.value)||1;
+  const redund=parseInt(document.getElementById('sc-redundancy')?.value)||2;
+  const overhead=parseFloat(document.getElementById('sc-overhead')?.value)||1.2;
+  const storType=document.getElementById('sc-stor-type')?.value||'online';
+  const storNotes={online:'Online NAS/SAN: fast random access, suits live ingest and edit simultaneously. Plan for sustained write speed across all streams.',nearline:'Nearline (LTO/slow NAS): low cost per TB. Suitable for archive/backup. Not for live ingest.',portable:'Portable SSD/HDD: flexible for field. Consider RAID for live multi-stream.',cloud:'Cloud: best for nearline/archive. Ensure upload bandwidth matches total bitrate.'};
+  const noteEl=document.getElementById('sc-stor-note');if(noteEl)noteEl.textContent=storNotes[storType]||'';
+  const resEl=document.getElementById('sc-results');const brkEl=document.getElementById('sc-breakdown');
+  if(!scStreams.length){if(resEl)resEl.style.display='none';if(brkEl)brkEl.style.display='none';return;}
+  let totalBitrateMbps=0;let rows='';const streamData=[];
+  scStreams.forEach((s,i)=>{
+    const codec=SC_CODECS.find(c=>c.id===s.codecId);const raster=SC_RASTERS.find(r=>r.id===s.rasterId);if(!codec||!raster)return;
+    const br=scBitrate(s);const brTotal=br*s.count;totalBitrateMbps+=brTotal;
+    const gbPerHour=br*3600/8/1024;const gbPerDay=gbPerHour*hours*s.count;const gbRedund=gbPerDay*redund*overhead;
+    streamData.push({s,codec,raster,br,brTotal,gbPerHour,gbPerDay,gbRedund});
+    rows+=`<tr><td>${i+1}</td><td>${s.count>1?`${s.count}× `:''}Stream ${i+1}</td><td>${codec.label}</td><td>${raster.label}</td><td>${s.fps} fps</td><td>${scFmtBitrate(br)}${s.count>1?` × ${s.count} = ${scFmtBitrate(brTotal)}`:''}</td><td>${scFmtSize(gbPerHour)}/hr</td><td class="highlight">${scFmtSize(gbPerDay)}</td><td class="highlight">${scFmtSize(gbRedund)}</td></tr>`;
+  });
+  const totalGbPerDay=streamData.reduce((a,d)=>a+d.gbPerDay,0);const totalGbRedund=streamData.reduce((a,d)=>a+d.gbRedund,0);const totalGbProject=totalGbRedund*days;const totalGbPerHr=streamData.reduce((a,d)=>a+d.gbPerHour*d.s.count,0);
+  rows+=`<tr style="border-top:1px solid #3a4a3a;font-weight:600"><td colspan="5" style="color:#80e080">Total</td><td>${scFmtBitrate(totalBitrateMbps)}</td><td>${scFmtSize(totalGbPerHr)}/hr</td><td class="highlight">${scFmtSize(totalGbPerDay)}</td><td class="highlight">${scFmtSize(totalGbRedund)}</td></tr>`;
+  const tbody=document.getElementById('sc-table-body');if(tbody)tbody.innerHTML=rows;
+  const sustainedMBs=totalBitrateMbps/8;
+  const rgrid=document.getElementById('sc-result-grid');
+  if(rgrid)rgrid.innerHTML=`<div class="sc-stat"><div class="sc-stat-val">${scFmtBitrate(totalBitrateMbps)}</div><div class="sc-stat-label">Total ingest bitrate</div></div><div class="sc-stat"><div class="sc-stat-val">${sustainedMBs.toFixed(0)} MB/s</div><div class="sc-stat-label">Sustained write speed</div></div><div class="sc-stat"><div class="sc-stat-val">${scFmtSize(totalGbPerHr)}</div><div class="sc-stat-label">Per hour</div></div><div class="sc-stat"><div class="sc-stat-val">${scFmtSize(totalGbPerDay)}</div><div class="sc-stat-label">Per day (${hours}h raw)</div></div><div class="sc-stat"><div class="sc-stat-val">${scFmtSize(totalGbRedund)}</div><div class="sc-stat-label">Per day (${redund}× + ${Math.round((overhead-1)*100)}% buffer)</div></div><div class="sc-stat" style="border-color:#3a6a3a"><div class="sc-stat-val" style="font-size:24px">${scFmtSize(totalGbProject)}</div><div class="sc-stat-label">Total project (${days} day${days>1?'s':''})</div></div>`;
+  const warn=document.getElementById('sc-warn');const warnings=[];
+  if(sustainedMBs>1000)warnings.push(`⚠ ${sustainedMBs.toFixed(0)} MB/s sustained write — requires high-performance NVMe SAN or all-flash NAS.`);
+  if(totalBitrateMbps>10000)warnings.push('⚠ Total bitrate exceeds 10 Gbps — ensure 25/40/100GbE infrastructure.');
+  if(redund===1)warnings.push('⚠ No redundancy — a single drive failure could lose all recordings.');
+  if(warn){warn.className='sc-warn'+(warnings.length?' show':'');warn.innerHTML=warnings.join('<br>');}
+  if(resEl)resEl.style.display='block';if(brkEl)brkEl.style.display='block';
+}
+function scShow(){document.getElementById('sc-overlay').classList.add('open');document.getElementById('zc').style.display='none';if(!scStreams.length)scAddStream();else{renderScStreams();scCalc();}}
+function scHide(){document.getElementById('sc-overlay').classList.remove('open');document.getElementById('zc').style.display='flex';}
+
+// ═══════════════════════════════════════════════════════════════════
+// LOAD TEMPLATE
+// ═══════════════════════════════════════════════════════════════════
+function loadTpl(t){
+  if(activeTpl&&activeTpl!=='storagecalc')captureCurrentCanvas();
+  if(activeTpl==='storagecalc')scHide();
+  activeTpl=t;buildSB(TPL_CATS[t]);
+  document.querySelectorAll('.toolbar-row .tb').forEach(b=>{b.classList.toggle('on',b.getAttribute('onclick')===`loadTpl('${t}')`);});
+  if(t==='storagecalc'){scShow();st('Storage Calculator — configure streams, duration and redundancy.');return;}
+  if(projectStore[t]){restoreCanvas(t);fitV();runCanvasValidation();st(`${t} — ${nodes.length} node${nodes.length!==1?'s':''}`);return;}
+  clearAll();
+  // All templates start blank in this app — no default layouts
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+setProjName('Untitled project');
+const _blank=()=>({nodes:[],edges:[],uid:1,vx:0,vy:0,vz:1});
+ALL_TPLS.forEach(t=>{projectStore[t]=_blank();});
+buildSB(TPL_CATS['live']);
+loadTpl('live');
+
+// ─────────────────────────────────────────────────────────────────
+// CAMERA SETUP DIALOG
+// ─────────────────────────────────────────────────────────────────
+let pendingCamDrop = null; // {x, y} where camera was dropped, or null for sidebar click
+
+function showCamDialog(dropX, dropY) {
+  pendingCamDrop = (dropX !== undefined) ? {x: dropX, y: dropY} : null;
+  // Populate model selector from catalogue
+  const camGroups = CAT['cam'] ? CAT['cam'].g : [];
+  const sel = document.getElementById('cam-model-sel');
+  sel.innerHTML = camGroups.map(g =>
+    `<optgroup label="${g.l}">${g.i.map(item => `<option value="${item.n}">${item.n}</option>`).join('')}</optgroup>`
+  ).join('');
+  document.getElementById('cam-count-inp').value = '1';
+  document.getElementById('cam-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('cam-count-inp').focus(), 60);
+}
+
+function camCancel() {
+  document.getElementById('cam-overlay').classList.remove('open');
+  pendingCamDrop = null;
+}
+
+function camConfirm() {
+  const modelName = document.getElementById('cam-model-sel').value;
+  const count = Math.max(1, Math.min(24, parseInt(document.getElementById('cam-count-inp').value) || 1));
+  document.getElementById('cam-overlay').classList.remove('open');
+
+  // Determine placement origin
+  const r = wrap.getBoundingClientRect();
+  let originX, originY;
+  if (pendingCamDrop) {
+    originX = pendingCamDrop.x;
+    originY = pendingCamDrop.y;
+  } else {
+    // Sidebar click: place at left side of canvas, vertically centred for the group
+    const groupH = count * H + (count - 1) * 12;
+    originX = (40 - vx) / vz;
+    originY = (r.height / 2 - vy) / vz - groupH / 2;
+  }
+
+  const spacing = H + 12;
+  snapshot();
+  const addedNodes = [];
+  for (let i = 0; i < count; i++) {
+    const nt = TYPES.find(t => t.id === 'cam');
+    if (!nt) continue;
+    const n = {
+      id: 'n' + (uid++),
+      typeId: 'cam',
+      label: modelName,
+      fill: nt.fill, fg: nt.fg, cat: nt.cat,
+      x: Math.round(originX),
+      y: Math.round(originY + i * spacing),
+      m: !!nt.m
+    };
+    nodes.push(n); rnN(n);
+    addedNodes.push(n);
+  }
+
+  // Select all added cameras
+  selN = new Set(addedNodes.map(n => n.id));
+  selE = new Set();
+  updateSelVis();
+  fitV();
+  pendingCamDrop = null;
+  st(`Added ${count} × ${modelName} — arranged in a column`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ROUTER MODEL DIALOG
+// ─────────────────────────────────────────────────────────────────
+let pendingRtrNode = null; // the router node waiting for a model to be assigned
+
+function showRtrDialog(node) {
+  pendingRtrNode = node;
+  document.getElementById('rtr-title').textContent = `🔀 Select router model — ${node.label}`;
+
+  const typeId = node.typeId; // 'sdi-rtr' or 'madi-rtr'
+  const cat = CAT[typeId];
+
+  let html = '';
+  if (cat) {
+    cat.g.forEach(g => {
+      html += `<div class="rtr-group-label">${g.l}</div>`;
+      g.i.forEach(item => {
+        const b = bc(item.b);
+        html += `<div class="rtr-item" onclick="rtrConfirm('${item.n.replace(/'/g, "\'")}')">
+          <span class="rtr-dot" style="background:${g.f}"></span>
+          <span style="flex:1">${item.n}</span>
+          <span class="rtr-sub">${item.s}</span>
+          <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;background:${b.bg};color:${b.tx};margin-left:6px">${item.b}</span>
+        </div>`;
+      });
+    });
+  }
+  html += `<div class="rtr-skip" onclick="rtrSkip()">↷ Skip — assign model later</div>`;
+
+  document.getElementById('rtr-list').innerHTML = html;
+  document.getElementById('rtr-overlay').classList.add('open');
+}
+
+function rtrConfirm(modelName) {
+  document.getElementById('rtr-overlay').classList.remove('open');
+  if (!pendingRtrNode) return;
+  snapshot();
+  pendingRtrNode.label = modelName;
+  const g = document.getElementById('n-' + pendingRtrNode.id);
+  if (g) g.remove();
+  rnN(pendingRtrNode);
+  reE();
+  pendingRtrNode = null;
+  st(`Router set to: ${modelName}`);
+}
+
+function rtrSkip() {
+  document.getElementById('rtr-overlay').classList.remove('open');
+  pendingRtrNode = null;
+  st('Router added — click ⌄ to assign model later');
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// ROUTER CAPACITY DATABASE
+// ─────────────────────────────────────────────────────────────────
+const RTR_CAPACITY = {
+  // Videohub SDI routers — inputs × outputs
+  'Videohub 10×10 12G':   {inputs:10,  outputs:10},
+  'Videohub 20×20 12G':   {inputs:20,  outputs:20},
+  'Videohub 40×40 12G':   {inputs:40,  outputs:40},
+  'Videohub 80×80 12G':   {inputs:80,  outputs:80},
+  'Videohub 120×120 12G': {inputs:120, outputs:120},
+  // ATEM MADI
+  'ATEM Constellation HD — MADI':              {inputs:32,  outputs:32},
+  'ATEM 4 M/E Constellation 4K Plus — MADI':  {inputs:128, outputs:128},
+  'SSL System T MADI Router':                  {inputs:64,  outputs:64},
+  'Lawo mc²56 MADI':                           {inputs:64,  outputs:64},
+  // ATEM vision mixers used as destination
+  'ATEM Mini':                      {inputs:4,  outputs:1},
+  'ATEM Mini Pro':                  {inputs:4,  outputs:1},
+  'ATEM Mini Extreme':              {inputs:8,  outputs:1},
+  'ATEM SDI':                       {inputs:4,  outputs:1},
+  'ATEM SDI Pro ISO':               {inputs:4,  outputs:1},
+  'ATEM SDI Extreme ISO':           {inputs:8,  outputs:1},
+  'ATEM Television Studio HD8':     {inputs:8,  outputs:1},
+  'ATEM Television Studio HD8 ISO': {inputs:8,  outputs:1},
+  'ATEM Television Studio 4K8':     {inputs:8,  outputs:1},
+  'ATEM 1 M/E Constellation HD':   {inputs:10, outputs:10},
+  'ATEM 2 M/E Constellation HD':   {inputs:20, outputs:20},
+  'ATEM 4 M/E Constellation HD':   {inputs:40, outputs:40},
+  'ATEM 1 M/E Constellation 4K':   {inputs:10, outputs:10},
+  'ATEM 2 M/E Constellation 4K':   {inputs:20, outputs:20},
+  'ATEM 4 M/E Constellation 4K':   {inputs:40, outputs:40},
+  'ATEM 4 M/E Constellation 4K Plus': {inputs:80, outputs:80},
+};
+
+function getRtrCapacity(node) {
+  // Try exact label match
+  if(RTR_CAPACITY[node.label]) return RTR_CAPACITY[node.label];
+  // Try partial match
+  for(const key of Object.keys(RTR_CAPACITY)){
+    if(node.label.includes(key)||key.includes(node.label)) return RTR_CAPACITY[key];
+  }
+  // Parse from label e.g. "Videohub 40×40" → 40 inputs
+  const m = node.label.match(/(\d+)\s*[×x]\s*(\d+)/);
+  if(m) return {inputs:parseInt(m[1]),outputs:parseInt(m[2])};
+  return null;
+}
+
+function checkRtrCapacity(rtrNode, camCount) {
+  const cap = getRtrCapacity(rtrNode);
+  if(!cap) return null; // unknown model — no warning
+  if(camCount > cap.inputs) {
+    // Suggest a larger router
+    const needed = camCount;
+    const suggestions = Object.entries(RTR_CAPACITY)
+      .filter(([k,v])=>v.inputs>=needed && (rtrNode.typeId==='sdi-rtr'?k.includes('Videohub'):!k.includes('Videohub')))
+      .sort((a,b)=>a[1].inputs-b[1].inputs);
+    const suggest = suggestions[0]?suggestions[0][0]:null;
+    return {
+      camCount, maxInputs:cap.inputs,
+      message:`⚠ Router capacity exceeded: ${rtrNode.label} has ${cap.inputs} inputs but you have ${camCount} camera${camCount>1?'s':''}. ` +
+        (suggest?`Consider upgrading to a ${suggest} (${RTR_CAPACITY[suggest].inputs} inputs).`:'A larger router is required.'),
+    };
+  }
+  return null; // within capacity
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CABLE SCHEDULE SYSTEM
+// ─────────────────────────────────────────────────────────────────
+let pendingCableData = null;
+let lastCableData = null; // set when cable dialog is opened
+
+function openCableDialog(cableData) {
+  // cableData = array of {locName, defaultStart, cables:[{from,cableNo,to,signal,length,connector}]}
+  // Here we just ask for location names + starting numbers
+  pendingCableData = cableData;
+  const locsDiv = document.getElementById('cable-locs');
+  locsDiv.innerHTML = cableData.map((loc,i) => `
+    <div class="cable-loc">
+      <div class="cable-loc-title">${loc.icon} Location ${i+1} — ${loc.locType}</div>
+      <div class="cable-loc-row">
+        <label>Location name</label>
+        <input class="cable-loc-inp" id="cloc-name-${i}" type="text" value="${loc.defaultName}" placeholder="e.g. Camera positions"/>
+      </div>
+      <div class="cable-loc-row">
+        <label>Starting cable no.</label>
+        <input class="cable-loc-num" id="cloc-start-${i}" type="number" value="${loc.defaultStart}" min="1" max="9999"/>
+      </div>
+      <div style="font-size:10px;color:#5050a0;margin-top:4px">${loc.cables.length} cable${loc.cables.length!==1?'s':''} in this location</div>
+    </div>
+  `).join('');
+  document.getElementById('cable-overlay').classList.add('open');
+}
+
+function cableCancel() {
+  document.getElementById('cable-overlay').classList.remove('open');
+  pendingCableData = null;
+}
+
+function cableConfirm() {
+  document.getElementById('cable-overlay').classList.remove('open');
+  if(!pendingCableData) return;
+
+  // Build final cable list with user-defined names and numbers
+  const rows = [];
+  pendingCableData.forEach((loc, i) => {
+    const locName = document.getElementById(`cloc-name-${i}`)?.value || loc.defaultName;
+    const startNum = parseInt(document.getElementById(`cloc-start-${i}`)?.value) || loc.defaultStart;
+    loc.cables.forEach((cable, j) => {
+      const cableNo = startNum + j;
+      rows.push({
+        'From':          cable.from,
+        'Cable No.':     String(cableNo).padStart(3,'0'),
+        'To':            cable.to,
+        'Signal Type':   cable.signal,
+        'Length (m)':    cable.length || '',
+        'Connector Type':cable.connector || 'BNC',
+        'Notes':         cable.notes || '',
+      });
+    });
+  });
+
+  exportCableExcel(rows);
+}
+
+function exportCableExcel(rows) {
+  if(!rows.length){st('No cables to export.');return;}
+  const headers = Object.keys(rows[0]);
+  const tableHTML = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body><table border="1">'
+    + '<thead><tr style="background:#1a3a5c;color:#fff;font-weight:bold">'
+    + headers.map(hd=>'<th>'+hd+'</th>').join('')+'</tr></thead><tbody>'
+    + rows.map(function(r,i){return '<tr style="background:'+(i%2===0?'#f8f8ff':'#eeeeff')+'">'
+      +headers.map(function(hd){return '<td>'+String(r[hd])+'</td>';}).join('')+'</tr>';}).join('')
+    + '</tbody></table></body></html>';
+  const blob = new Blob([tableHTML], {type:'application/vnd.ms-excel;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='cable-schedule.xls'; a.click();
+  URL.revokeObjectURL(url);
+  st('Cable schedule exported — '+rows.length+' cables across '+(pendingCableData?pendingCableData.length:0)+' locations');
+  pendingCableData=null;
+}
+
+// Build cable data from the current fibre layout
+// Called after fibre nodes + edges are created
+function buildCableData(camList, ctp1, mux, demux, ctp2, dst, sigType, distLabel) {
+  const signal = sigType || 'SDI';
+  const fibreLabel = distLabel ? `${distLabel} fibre` : 'Fibre';
+
+  // Location 1: cameras
+  // Location 2: CTP (camera side)
+  // Location 3: Fibre mux
+  // Location 4: Fibre demux
+  // Location 5: CTP (router side)
+  // Location 6: Router
+
+  const locs = [
+    {
+      icon:'📷', locType:'Camera positions', defaultName:'Camera positions', defaultStart:100,
+      cables: camList.map((cam,i)=>({
+        from: cam.label + ` (cam ${i+1})`,
+        to: `${ctp1.label} port ${i+1}`,
+        signal, length:'', connector:'LEMO / BNC', notes:'Camera tail'
+      }))
+    },
+    {
+      icon:'🔌', locType:'Camera Termination Panel (CTP)', defaultName:'CTP — Camera side', defaultStart:200,
+      cables: camList.map((cam,i)=>({
+        from: `${ctp1.label} port ${i+1}`,
+        to: `${mux.label} input ${i+1}`,
+        signal, length:'', connector:'BNC', notes:'CTP to Fibre mux'
+      }))
+    },
+    {
+      icon:'〰️', locType:'Fibre run', defaultName:'Fibre trunk', defaultStart:300,
+      cables: [{
+        from: `${mux.label}`,
+        to: `${demux.label}`,
+        signal:'Fibre (SMPTE 311M)', length:distLabel||'', connector:'LEMO / LC', notes:fibreLabel
+      }]
+    },
+    {
+      icon:'🔌', locType:'CTP — Router side', defaultName:'CTP — Router side', defaultStart:400,
+      cables: camList.map((cam,i)=>({
+        from: `${demux.label} output ${i+1}`,
+        to: `${ctp2.label} port ${i+1}`,
+        signal, length:'', connector:'BNC', notes:'Demux to CTP'
+      }))
+    },
+    {
+      icon:'🔀', locType:'Router inputs', defaultName:'Router — ' + dst.label, defaultStart:500,
+      cables: camList.map((cam,i)=>({
+        from: `${ctp2.label} port ${i+1}`,
+        to: `${dst.label} input ${i+1}`,
+        signal, length:'', connector:'BNC', notes:'CTP to router'
+      }))
+    },
+  ];
+
+  return locs;
+}
+
+
+function exportCableSchedule() {
+  if(!lastCableData){st('No cable schedule yet — connect cameras via fibre first.');return;}
+  openCableDialog(lastCableData);
+}
+
+
+let distDialogPaused = false;
+
+function changeRouterFromDialog(){
+  if(!pendingConn) return;
+  const rtrNode = nodes.find(n=>n.id===pendingConn.toId);
+  if(!rtrNode) return;
+
+  distDialogPaused = true;
+  selN=new Set([rtrNode.id]); updateSelVis();
+
+  // Populate the inline router picker inside the dist dialog
+  const cat = CAT[rtrNode.typeId];
+  const picker = document.getElementById('dist-rtr-picker');
+  const list   = document.getElementById('dist-rtr-picker-list');
+  if(!picker||!list||!cat) return;
+
+  let html = '';
+  cat.g.forEach(g=>{
+    html += `<div style="padding:6px 13px 2px;font-size:10px;font-weight:600;color:#6060a0;text-transform:uppercase;letter-spacing:.06em">${g.l}</div>`;
+    g.i.forEach(item=>{
+      const b = bc(item.b);
+      html += `<div class="rtr-item" data-model="${item.n.replace(/"/g,'&quot;')}">
+        <span class="rtr-dot" style="background:${g.f}"></span>
+        <span style="flex:1">${item.n}</span>
+        <span class="rtr-sub">${item.s}</span>
+        <span style="font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;background:${b.bg};color:${b.tx};margin-left:6px;flex-shrink:0">${item.b}</span>
+      </div>`;
+    });
+  });
+  list.innerHTML = html;
+
+  // Attach click handlers
+  list.querySelectorAll('.rtr-item[data-model]').forEach(el=>{
+    el.addEventListener('mousedown', e=>{
+      e.stopPropagation();
+      const modelName = el.getAttribute('data-model');
+      applyRouterModelFromDialog(rtrNode.id, modelName);
+    });
+  });
+
+  picker.style.display = 'block';
+  // Hide the change button so user doesn't re-open
+  const capWarn = document.getElementById('dist-cap-warn');
+  if(capWarn){
+    const btn = capWarn.querySelector('.cap-change-btn');
+    if(btn) btn.style.display='none';
+  }
+}
+
+function applyRouterModelFromDialog(nodeId, modelName){
+  const node = nodes.find(n=>n.id===nodeId);
+  if(!node) return;
+  snapshot();
+  node.label = modelName;
+  const g = document.getElementById('n-'+nodeId);
+  if(g) g.remove();
+  rnN(node);
+  reE();
+  // Close the inline picker
+  const picker = document.getElementById('dist-rtr-picker');
+  if(picker) picker.style.display='none';
+  distDialogPaused = false;
+  // Update dialog title
+  const srcNode = nodes.find(n=>n.id===pendingConn.fromId);
+  if(srcNode) document.getElementById('dist-title').textContent = '📡 Signal run: '+srcNode.label+' → '+modelName;
+  // Recheck capacity
+  updateCapWarning();
+  st('Router updated to: '+modelName);
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// VIDEO FORMAT & COMPATIBILITY SYSTEM
+// ─────────────────────────────────────────────────────────────────
+// projectFormat and compatOverrides declared at top of script
+
+const MODEL_COMPAT = {
+  'Sony HDC-5500':['4K UHD/*','Full HD/*','HD 720/*'],'Sony HDC-5500V':['4K UHD/*','Full HD/*','HD 720/*'],
+  'Sony HDC-3500':['4K UHD/*','Full HD/*','HD 720/*'],'Sony HDC-3200':['Full HD/*','HD 720/*'],
+  'Sony HDC-P50A':['Full HD/*','HD 720/*'],'Sony FR7':['4K UHD/*','Full HD/*'],
+  'ARRI ALEXA 35':['4K DCI/*','4K UHD/*','Full HD/*'],'ARRI ALEXA 35 Live':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'ARRI ALEXA Mini LF':['4K DCI/*','4K UHD/*','Full HD/*'],'ARRI AMIRA':['Full HD/*','HD 720/*'],
+  'Blackmagic PYXIS 6K':['4K DCI/*','4K UHD/*','Full HD/*'],'Blackmagic PYXIS 12K':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'Blackmagic URSA Cine 12K':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'Blackmagic Studio Camera 6K Pro':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'Blackmagic URSA Broadcast G2':['4K DCI/*','4K UHD/*','Full HD/*','HD 720/*'],
+  'Canon EOS C70':['4K DCI/*','4K UHD/*','Full HD/*'],'Canon EOS C300 Mk III':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'Canon EOS C500 Mk II':['4K DCI/*','4K UHD/*','Full HD/*'],'Canon EOS C400':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'Canon CR-N700':['4K UHD/*','Full HD/*'],'Panasonic VariCam 35':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'Panasonic VariCam LT':['4K DCI/*','4K UHD/*','Full HD/*'],'Panasonic AU-EVA1':['4K DCI/*','4K UHD/*','Full HD/*'],
+  'Panasonic AK-UC4000':['4K UHD/*','Full HD/*'],'Panasonic AW-UE160':['4K UHD/*','Full HD/*'],
+  'Videohub 10x10 12G':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'Videohub 20x20 12G':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'Videohub 40x40 12G':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'Videohub 80x80 12G':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'Videohub 120x120 12G':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'vMix Basic HD':['Full HD/*','HD 720/*'],'vMix HD':['Full HD/*','HD 720/*'],
+  'vMix 4K':['4K UHD/*','Full HD/*','HD 720/*'],'vMix Pro':['4K UHD/*','Full HD/*','HD 720/*'],
+  'ATEM Mini':['Full HD/*','HD 720/*'],'ATEM Mini Pro':['Full HD/*','HD 720/*'],
+  'ATEM Mini Extreme':['Full HD/*','HD 720/*'],'ATEM Mini Extreme ISO':['Full HD/*','HD 720/*'],
+  'ATEM SDI':['Full HD/*','HD 720/*'],'ATEM SDI Pro ISO':['Full HD/*','HD 720/*'],
+  'ATEM SDI Extreme ISO':['Full HD/*','HD 720/*'],
+  'ATEM Television Studio HD8':['Full HD/*','HD 720/*'],
+  'ATEM Television Studio HD8 ISO':['Full HD/*','HD 720/*'],
+  'ATEM Television Studio 4K8':['4K UHD/*','Full HD/*','HD 720/*'],
+  'ATEM 1 M/E Constellation HD':['Full HD/*','HD 720/*'],
+  'ATEM 2 M/E Constellation HD':['Full HD/*','HD 720/*'],
+  'ATEM 4 M/E Constellation HD':['Full HD/*','HD 720/*'],
+  'ATEM 1 M/E Constellation 4K':['4K UHD/*','Full HD/*','HD 720/*'],
+  'ATEM 2 M/E Constellation 4K':['4K UHD/*','Full HD/*','HD 720/*'],
+  'ATEM 4 M/E Constellation 4K':['4K UHD/*','Full HD/*','HD 720/*'],
+  'ATEM 4 M/E Constellation 4K Plus':['4K UHD/*','Full HD/*','HD 720/*'],
+  'Blackmagic Streaming Encoder HD':['Full HD/*','HD 720/*'],
+  'Blackmagic Streaming Encoder 4K':['4K UHD/*','Full HD/*','HD 720/*'],
+  'Web Presenter HD':['Full HD/*','HD 720/*'],'Web Presenter 4K':['4K UHD/*','Full HD/*'],
+  'EVS XT-VIA':['4K UHD/*','Full HD/*','HD 720/*'],'EVS XT-VIA 8K':['4K UHD/*','Full HD/*'],
+  'EVS XT-GO':['4K UHD/*','Full HD/*','HD 720/*'],'EVS XS-VIA':['4K UHD/*','Full HD/*','HD 720/*'],
+  'SimplyLive RiMotion R16':['Full HD/*','HD 720/*'],
+  'SimplyLive RiMotion R166':['4K UHD/*','Full HD/*','HD 720/*'],
+  'SimplyLive Production Suite Flex':['4K UHD/*','Full HD/*','HD 720/*'],
+  'Avid NEXIS | PRO':['4K UHD/*','Full HD/*','HD 720/*','SD PAL/*','SD NTSC/*'],
+  'Avid NEXIS | E2':['4K UHD/*','Full HD/*','HD 720/*','SD PAL/*','SD NTSC/*'],
+  'Avid NEXIS | E2 SSD':['4K UHD/*','Full HD/*','HD 720/*'],
+  'Avid NEXIS | E4':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'Avid NEXIS | E5':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'Avid NEXIS | E5 NL':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*','SD PAL/*','SD NTSC/*'],
+  'Synology FS2500':['4K UHD/*','Full HD/*','HD 720/*'],
+  'Synology FS3410':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'Synology FS6400':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'EditShare EFS 200':['4K UHD/*','Full HD/*','HD 720/*','SD PAL/*','SD NTSC/*'],
+  'EditShare EFS 300':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'EditShare EFS 450':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+  'EditShare Ultimate NVMe Lite':['4K UHD/*','4K DCI/*','Full HD/*','HD 720/*'],
+};
+
+const COMPAT_SUGGEST = {
+  'Sony HDC-3200':'Sony HDC-3500 or HDC-5500','Sony HDC-P50A':'Sony FR7',
+  'ARRI AMIRA':'ARRI ALEXA 35','vMix Basic HD':'vMix 4K','vMix HD':'vMix 4K',
+  'ATEM Mini':'ATEM Television Studio 4K8','ATEM Mini Pro':'ATEM Television Studio 4K8',
+  'ATEM Mini Extreme':'ATEM Television Studio 4K8','ATEM SDI':'ATEM Television Studio 4K8',
+  'ATEM SDI Pro ISO':'ATEM Television Studio 4K8',
+  'ATEM Television Studio HD8':'ATEM Television Studio 4K8',
+  'ATEM Television Studio HD8 ISO':'ATEM Television Studio 4K8',
+  'ATEM 1 M/E Constellation HD':'ATEM 1 M/E Constellation 4K',
+  'ATEM 2 M/E Constellation HD':'ATEM 2 M/E Constellation 4K',
+  'ATEM 4 M/E Constellation HD':'ATEM 4 M/E Constellation 4K',
+  'Blackmagic Streaming Encoder HD':'Blackmagic Streaming Encoder 4K',
+  'Web Presenter HD':'Web Presenter 4K',
+  'SimplyLive RiMotion R16':'SimplyLive RiMotion R166',
+};
+
+function isModelCompatible(modelLabel){
+  if(!projectFormat.raster||!projectFormat.fps)return true;
+  const compat=MODEL_COMPAT[modelLabel];
+  if(!compat)return true;
+  return compat.some(pattern=>{
+    const [pr,pf]=pattern.split('/');
+    return(pr==='*'||pr===projectFormat.raster)&&(pf==='*'||pf===projectFormat.fps);
+  });
+}
+function getCompatSuggestion(m){return COMPAT_SUGGEST[m]||null;}
+
+function openFmtDialog(fromNewProject){
+  document.getElementById('fmt-title').textContent=fromNewProject?'📐 Set project video format':'📐 Change project video format';
+  if(projectFormat.raster)document.getElementById('fmt-raster').value=projectFormat.raster;
+  if(projectFormat.fps)document.getElementById('fmt-fps').value=projectFormat.fps;
+  document.getElementById('fmt-colour').value=projectFormat.colour||'Rec.709';
+  updateFmtPreview();
+  document.getElementById('fmt-overlay').classList.add('open');
+}
+
+function updateFmtPreview(){
+  const raster=document.getElementById('fmt-raster').value;
+  const fps=document.getElementById('fmt-fps').value;
+  const colour=document.getElementById('fmt-colour').value;
+  const prev=document.getElementById('fmt-preview');
+  if(raster&&fps){
+    prev.style.display='block';
+    const scan=fps.includes('i')?'Interlaced':'Progressive';
+    const hdr=colour.includes('2100')?' · HDR':'';
+    const sig=(raster==='4K DCI'||raster==='4K UHD')?'12G-SDI':'3G-SDI / HD-SDI';
+    prev.innerHTML='<strong>'+raster+' '+fps+'</strong> &nbsp;&middot;&nbsp; '+colour+hdr+'<br><span style="color:#6060a0;font-size:10px">'+scan+' &middot; Signal: '+sig+'</span>';
+  }else{prev.style.display='none';}
+}
+
+function fmtCancel(){document.getElementById('fmt-overlay').classList.remove('open');}
+
+function fmtConfirm(){
+  const raster=document.getElementById('fmt-raster').value;
+  const fps=document.getElementById('fmt-fps').value;
+  const colour=document.getElementById('fmt-colour').value;
+  if(!raster||!fps){st('Please select both a raster and a frame rate.');return;}
+  document.getElementById('fmt-overlay').classList.remove('open');
+  const changed=raster!==projectFormat.raster||fps!==projectFormat.fps;
+  projectFormat={raster,fps,colour};
+  updateFmtBadge();
+  if(changed)validateAllCanvases();
+  else st('Format set: '+raster+' '+fps+' \u00b7 '+colour);
+}
+
+function updateFmtBadge(){
+  const badge=document.getElementById('fmt-badge');if(!badge)return;
+  if(projectFormat.raster&&projectFormat.fps){
+    badge.textContent=projectFormat.raster+' '+projectFormat.fps;
+    badge.className='';badge.title='Project format: '+projectFormat.raster+' '+projectFormat.fps+' \u00b7 '+projectFormat.colour+' \u2014 click to change';
+  }else{badge.textContent='\u26a0 No format set';badge.className='unset';badge.title='Click to set project video format';}
+}
+
+function validateNodes(nodeList){
+  return nodeList.filter(node=>node.m&&!compatOverrides.has(node.id)&&!isModelCompatible(node.label)&&node.label!==((TYPES||[]).find(t=>t.id===node.typeId)||{}).label).map(node=>({node,model:node.label,suggest:getCompatSuggestion(node.label)}));
+}
+
+function validateAllCanvases(){
+  captureCurrentCanvas();
+  let allIssues=[];
+  ALL_TPLS.forEach(tpl=>{
+    const stored=projectStore[tpl];
+    if(!stored||!stored.nodes)return;
+    validateNodes(stored.nodes).forEach(i=>{i.tpl=tpl;allIssues.push(i);});
+  });
+  if(allIssues.length)showCompatDialog(allIssues);
+  else st('All models compatible with '+projectFormat.raster+' '+projectFormat.fps+' \u2713');
+  runCanvasValidation();
+}
+
+function showCompatDialog(issues){
+  document.getElementById('compat-title').textContent='\u26a0 '+issues.length+' compatibility issue'+(issues.length>1?'s':'')+' \u2014 '+projectFormat.raster+' '+projectFormat.fps;
+  document.getElementById('compat-list').innerHTML=issues.map((issue,i)=>'<div class="compat-item" id="compat-item-'+i+'"><div class="compat-item-title">'+issue.node.label+' <span style="color:#6060a0;font-weight:400;font-size:10px">('+((CL||{})[issue.node.cat]||issue.node.cat)+(issue.tpl?' \u00b7 '+issue.tpl:'')+' canvas)</span></div><div class="compat-item-issue">Not compatible with '+projectFormat.raster+' '+projectFormat.fps+'</div>'+(issue.suggest?'<div class="compat-item-suggest">\u2713 Suggested: '+issue.suggest+'</div>':'')+'<button class="compat-override-btn" onclick="compatOverride(\''+issue.node.id+'\','+i+')">Accept this warning</button></div>').join('');
+  document.getElementById('compat-overlay').classList.add('open');
+}
+
+function compatOverride(nodeId,itemIdx){
+  compatOverrides.add(nodeId);
+  const el=document.getElementById('compat-item-'+itemIdx);
+  if(el){el.style.opacity='0.4';const btn=el.querySelector('.compat-override-btn');if(btn){btn.textContent='\u2713 Accepted';btn.disabled=true;}}
+  markNodeWarning(nodeId,true,true);
+}
+
+function compatAcceptAll(){
+  document.querySelectorAll('#compat-list .compat-override-btn').forEach(btn=>{if(!btn.disabled)btn.click();});
+  compatClose();
+}
+
+function compatClose(){document.getElementById('compat-overlay').classList.remove('open');}
+
+function markNodeWarning(nodeId,hasWarning,accepted){
+  const g=document.getElementById('n-'+nodeId);if(!g)return;
+  const existing=g.querySelector('.warn-marker');if(existing)existing.remove();
+  if(!hasWarning)return;
+  const node=nodes.find(n=>n.id===nodeId);if(!node)return;
+  const marker=document.createElementNS('http://www.w3.org/2000/svg','text');
+  marker.setAttribute('x',W(node)-6);marker.setAttribute('y',-3);
+  marker.setAttribute('text-anchor','middle');marker.setAttribute('font-size','13');
+  marker.setAttribute('fill',accepted?'#a06020':'#f0a020');
+  marker.setAttribute('pointer-events','none');marker.setAttribute('class','warn-marker');
+  marker.textContent='\u26a0';g.appendChild(marker);
+}
+
+function runCanvasValidation(){
+  if(!projectFormat.raster||!projectFormat.fps)return;
+  nodes.forEach(n=>markNodeWarning(n.id,false,false));
+  validateNodes(nodes).forEach(issue=>markNodeWarning(issue.node.id,true,compatOverrides.has(issue.node.id)));
+}
+
+// Compatibility check is now inline in selM
+
+</script>
+</body>
+</html>
