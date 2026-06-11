@@ -1,0 +1,790 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  .mv-app {
+    background: #1A1A1A;
+    border-radius: 40px;
+    width: 375px;
+    min-height: 812px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    border: 8px solid #2D2D2D;
+    box-shadow: 0 0 0 1px #444;
+  }
+  .mv-screen { display: none; flex-direction: column; height: 812px; }
+  .mv-screen.active { display: flex; }
+  .mv-statusbar {
+    background: #1A1A1A;
+    padding: 14px 24px 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: #888; font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+  .mv-content { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+  .mv-content::-webkit-scrollbar { display: none; }
+  .mv-tab-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: #1A1A1A; border-top: 0.5px solid #333;
+    display: flex; padding: 8px 0 20px;
+  }
+  .mv-tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; cursor: pointer; padding: 4px 0;
+    color: #555; font-size: 10px; font-family: 'Inter', sans-serif;
+    transition: color 0.2s;
+  }
+  .mv-tab.active { color: #C0392B; }
+  .mv-tab i { font-size: 22px; }
+
+  /* SPLASH / LOGIN SCREEN */
+  .splash-bg {
+    background: #1A1A1A;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1;
+  }
+  .vinyl-record {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #2D2D2D 28%, #1A1A1A 28.5%, #222 29%, #1A1A1A 29.5%, #222 40%, #1A1A1A 40.5%, #222 41%, #1A1A1A 41.5%, #222 52%, #1A1A1A 52.5%, #222 53%, #1A1A1A 53.5%, #222 64%, #1A1A1A 64.5%, #222 65%, #1A1A1A 65.5%, #1A1A1A 100%);
+    position: relative; margin-bottom: 32px;
+    animation: spin 4s linear infinite;
+  }
+  .vinyl-label {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px; height: 70px; border-radius: 50%;
+    background: #C0392B;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .vinyl-label span { font-size: 8px; color: #F5EFE0; font-family: 'Playfair Display'; font-weight: 700; letter-spacing: 1px; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .splash-title { font-family: 'Playfair Display', serif; font-size: 36px; color: #F5EFE0; font-weight: 700; margin-bottom: 6px; }
+  .splash-sub { font-size: 13px; color: #666; margin-bottom: 48px; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-btn-primary {
+    background: #C0392B; color: #F5EFE0; border: none;
+    border-radius: 30px; padding: 16px 48px;
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; width: 280px; margin-bottom: 12px;
+    transition: background 0.2s;
+  }
+  .mv-btn-primary:hover { background: #a82f25; }
+  .mv-btn-secondary {
+    background: transparent; color: #F5EFE0;
+    border: 0.5px solid #444;
+    border-radius: 30px; padding: 16px 48px;
+    font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; width: 280px;
+  }
+  .splash-price { margin-top: 24px; font-size: 12px; color: #555; }
+  .splash-price strong { color: #C9A84C; }
+
+  /* NAV HEADER */
+  .mv-header {
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .mv-header-title { font-family: 'Playfair Display'; font-size: 24px; color: #F5EFE0; font-weight: 700; }
+  .mv-header-sub { font-size: 12px; color: #666; margin-top: 2px; }
+  .mv-icon-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #2D2D2D; border: none; color: #F5EFE0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px;
+  }
+
+  /* COLLECTION SCREEN */
+  .search-bar {
+    margin: 0 20px 16px;
+    background: #2D2D2D; border-radius: 12px;
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  }
+  .search-bar input {
+    background: none; border: none; color: #F5EFE0;
+    font-size: 15px; flex: 1; outline: none; font-family: 'Inter';
+  }
+  .search-bar input::placeholder { color: #555; }
+  .filter-row {
+    display: flex; gap: 8px; padding: 0 20px 16px; overflow-x: auto;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-pill {
+    background: #2D2D2D; border: 0.5px solid #444;
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 12px; color: #888; white-space: nowrap;
+    cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+  }
+  .filter-pill.active { background: #C0392B; border-color: #C0392B; color: #F5EFE0; }
+
+  .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px; }
+  .record-card {
+    background: #2D2D2D; border-radius: 12px; overflow: hidden;
+    cursor: pointer; transition: transform 0.15s;
+  }
+  .record-card:hover { transform: scale(0.98); }
+  .record-sleeve {
+    width: 100%; aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .record-sleeve-inner {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+  }
+  .record-card-info { padding: 10px 12px 12px; }
+  .record-artist { font-size: 11px; color: #C0392B; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .record-title { font-family: 'Playfair Display'; font-size: 14px; color: #F5EFE0; margin: 2px 0; }
+  .record-meta { font-family: 'JetBrains Mono'; font-size: 10px; color: #555; }
+  .record-badge {
+    display: inline-block; font-size: 9px; padding: 2px 6px;
+    border-radius: 4px; margin-top: 4px;
+  }
+  .badge-rock { background: #3a1a1a; color: #C0392B; }
+  .badge-jazz { background: #1a2a1a; color: #4a9a4a; }
+  .badge-soul { background: #2a1a3a; color: #9a5aaa; }
+  .badge-electronic { background: #1a1a3a; color: #5a7aaa; }
+  .badge-offers { background: #2a2200; color: #C9A84C; }
+
+  /* RECORD DETAIL */
+  .detail-hero {
+    background: #2D2D2D; margin: 16px 20px;
+    border-radius: 16px; padding: 20px;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .detail-sleeve {
+    width: 100px; height: 100px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; flex-shrink: 0;
+  }
+  .detail-artist { font-size: 12px; color: #C0392B; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+  .detail-title { font-family: 'Playfair Display'; font-size: 20px; color: #F5EFE0; font-weight: 700; margin: 4px 0 8px; line-height: 1.2; }
+  .detail-section { margin: 0 20px 16px; }
+  .detail-section-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #2D2D2D; }
+  .detail-label { font-size: 13px; color: #666; }
+  .detail-value { font-family: 'JetBrains Mono'; font-size: 13px; color: #F5EFE0; }
+  .discogs-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: #1a1a2a; border-radius: 8px; padding: 10px 14px;
+    margin: 0 20px 16px; border: 0.5px solid #333;
+  }
+  .discogs-dot { width: 8px; height: 8px; border-radius: 50%; background: #4a9a4a; }
+  .discogs-text { font-size: 12px; color: #888; }
+  .discogs-value { font-size: 12px; color: #F5EFE0; font-family: 'JetBrains Mono'; margin-left: auto; }
+  .offer-toggle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 0 20px 16px; background: #2D2D2D;
+    border-radius: 12px; padding: 14px 16px;
+  }
+  .offer-toggle-label { font-size: 14px; color: #F5EFE0; }
+  .offer-toggle-sub { font-size: 11px; color: #666; margin-top: 2px; }
+  .toggle {
+    width: 44px; height: 26px; background: #4a9a4a; border-radius: 13px;
+    position: relative; cursor: pointer;
+  }
+  .toggle-thumb {
+    position: absolute; top: 3px; right: 3px;
+    width: 20px; height: 20px; border-radius: 50%; background: #F5EFE0;
+  }
+  .toggle.off { background: #444; }
+  .toggle.off .toggle-thumb { right: auto; left: 3px; }
+
+  /* ADD RECORD SCREEN */
+  .add-method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px; margin-bottom: 24px; }
+  .add-method-card {
+    background: #2D2D2D; border-radius: 16px;
+    padding: 20px 16px; text-align: center;
+    cursor: pointer; border: 0.5px solid #444;
+    transition: border-color 0.2s;
+  }
+  .add-method-card:hover { border-color: #C0392B; }
+  .add-method-icon { font-size: 32px; color: #C0392B; margin-bottom: 10px; }
+  .add-method-title { font-size: 14px; color: #F5EFE0; font-weight: 500; margin-bottom: 4px; }
+  .add-method-desc { font-size: 11px; color: #555; line-height: 1.4; }
+  .section-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin: 0 20px 10px; }
+  .mv-input-group { margin: 0 20px 14px; }
+  .mv-input-label { font-size: 12px; color: #666; margin-bottom: 6px; }
+  .mv-input {
+    width: 100%; background: #2D2D2D; border: 0.5px solid #444;
+    border-radius: 10px; padding: 12px 14px;
+    color: #F5EFE0; font-size: 14px; font-family: 'Inter';
+    box-sizing: border-box; outline: none;
+  }
+  .mv-input:focus { border-color: #C0392B; }
+  .mv-select {
+    width: 100%; background: #2D2D2D; border: 0.5px solid #444;
+    border-radius: 10px; padding: 12px 14px;
+    color: #F5EFE0; font-size: 14px; font-family: 'Inter';
+    box-sizing: border-box; outline: none; -webkit-appearance: none;
+  }
+  .camera-preview {
+    margin: 0 20px 16px; background: #0D0D0D; border-radius: 16px;
+    height: 180px; display: flex; align-items: center; justify-content: center;
+    border: 0.5px dashed #444; flex-direction: column; gap: 8px;
+  }
+  .camera-icon { font-size: 40px; color: #444; }
+  .camera-text { font-size: 13px; color: #555; }
+  .discogs-result {
+    margin: 0 20px 16px; background: #1a2a1a;
+    border: 0.5px solid #2a4a2a; border-radius: 12px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .discogs-result-icon { font-size: 24px; color: #4a9a4a; }
+  .discogs-result-title { font-size: 14px; color: #F5EFE0; font-weight: 500; }
+  .discogs-result-meta { font-size: 11px; color: #666; margin-top: 2px; }
+
+  /* MARKETPLACE SCREEN */
+  .offer-card {
+    margin: 0 20px 12px; background: #2D2D2D;
+    border-radius: 14px; padding: 16px;
+  }
+  .offer-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .offer-user { display: flex; align-items: center; gap: 10px; }
+  .offer-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #C0392B; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #F5EFE0; font-weight: 500;
+  }
+  .offer-username { font-size: 13px; color: #F5EFE0; font-weight: 500; }
+  .offer-location { font-size: 11px; color: #555; }
+  .offer-amount { font-family: 'Playfair Display'; font-size: 22px; color: #C9A84C; font-weight: 700; }
+  .offer-record-title { font-family: 'Playfair Display'; font-size: 15px; color: #F5EFE0; margin-bottom: 2px; }
+  .offer-record-sub { font-size: 12px; color: #666; }
+  .offer-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .offer-btn-accept {
+    flex: 1; background: #C0392B; border: none;
+    border-radius: 8px; padding: 10px;
+    color: #F5EFE0; font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: 'Inter';
+  }
+  .offer-btn-decline {
+    flex: 1; background: transparent; border: 0.5px solid #444;
+    border-radius: 8px; padding: 10px;
+    color: #666; font-size: 13px; cursor: pointer;
+    font-family: 'Inter';
+  }
+  .offer-btn-message {
+    width: 38px; background: transparent; border: 0.5px solid #444;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #888;
+  }
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 16px 20px; }
+  .stat-card { background: #2D2D2D; border-radius: 10px; padding: 12px; text-align: center; }
+  .stat-val { font-family: 'Playfair Display'; font-size: 22px; color: #F5EFE0; font-weight: 700; }
+  .stat-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* PROFILE SCREEN */
+  .profile-hero { padding: 20px; display: flex; flex-direction: column; align-items: center; }
+  .profile-avatar-wrap { position: relative; margin-bottom: 16px; }
+  .profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: #C0392B; display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display'; font-size: 28px; color: #F5EFE0; font-weight: 700;
+    border: 3px solid #2D2D2D;
+  }
+  .profile-public-badge {
+    position: absolute; bottom: 0; right: -4px;
+    background: #4a9a4a; border-radius: 10px; padding: 2px 7px;
+    font-size: 9px; color: #F5EFE0; font-weight: 500; border: 2px solid #1A1A1A;
+  }
+  .profile-name { font-family: 'Playfair Display'; font-size: 22px; color: #F5EFE0; font-weight: 700; }
+  .profile-handle { font-size: 13px; color: #C0392B; margin-top: 2px; }
+  .profile-joined { font-size: 11px; color: #555; margin-top: 4px; }
+  .pref-section { margin: 0 20px 16px; }
+  .pref-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0; border-bottom: 0.5px solid #2D2D2D;
+  }
+  .pref-label { font-size: 14px; color: #F5EFE0; }
+  .pref-value { font-size: 13px; color: #555; }
+  .genre-tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 20px 16px; }
+  .genre-tag {
+    background: #2D2D2D; border: 0.5px solid #444;
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; color: #888;
+  }
+  .genre-tag.fav { border-color: #C0392B; color: #C0392B; background: #2a1010; }
+
+  .back-btn {
+    background: none; border: none; color: #C0392B;
+    font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+    padding: 0; font-family: 'Inter';
+  }
+</style>
+
+<h2 class="sr-only">My Vinyl — iOS app prototype with Collection, Add Record, Marketplace, and Profile screens</h2>
+
+<div style="padding: 1rem 0; background: transparent;">
+
+<div class="mv-app">
+
+  <!-- SPLASH SCREEN -->
+  <div id="screen-splash" class="mv-screen active">
+    <div class="mv-statusbar"><span>9:41</span><span>●●●</span></div>
+    <div class="splash-bg">
+      <div class="vinyl-record">
+        <div class="vinyl-label">
+          <span>MY</span>
+          <span>VINYL</span>
+        </div>
+      </div>
+      <div class="splash-title">My Vinyl</div>
+      <div class="splash-sub">Your collection. Always with you.</div>
+      <button class="mv-btn-primary" onclick="showScreen('collection')">Sign In</button>
+      <button class="mv-btn-secondary" onclick="showScreen('collection')">Create Account</button>
+      <div class="splash-price">Available for <strong>£2.99</strong> on the App Store</div>
+    </div>
+  </div>
+
+  <!-- COLLECTION SCREEN -->
+  <div id="screen-collection" class="mv-screen">
+    <div class="mv-statusbar"><span>9:41</span><span>●●●</span></div>
+    <div class="mv-header">
+      <div>
+        <div class="mv-header-title">My Collection</div>
+        <div class="mv-header-sub">47 records</div>
+      </div>
+      <button class="mv-icon-btn" onclick="showScreen('add')"><i class="ti ti-plus" aria-hidden="true"></i></button>
+    </div>
+    <div class="mv-content">
+      <div class="search-bar">
+        <i class="ti ti-search" style="color:#555; font-size:16px;" aria-hidden="true"></i>
+        <input type="text" placeholder="Artist, title, label, year…" readonly>
+      </div>
+      <div class="filter-row">
+        <span class="filter-pill active">All</span>
+        <span class="filter-pill">Rock</span>
+        <span class="filter-pill">Jazz</span>
+        <span class="filter-pill">Soul</span>
+        <span class="filter-pill">Electronic</span>
+        <span class="filter-pill">1970s</span>
+        <span class="filter-pill">1980s</span>
+        <span class="filter-pill">For Offers</span>
+      </div>
+      <div class="record-grid">
+        <div class="record-card" onclick="showScreen('detail')">
+          <div class="record-sleeve" style="background: linear-gradient(135deg, #1a1020 0%, #3a1a2a 100%);">
+            <div class="record-sleeve-inner">🎸</div>
+          </div>
+          <div class="record-card-info">
+            <div class="record-artist">Led Zeppelin</div>
+            <div class="record-title">IV</div>
+            <div class="record-meta">1971 · Atlantic</div>
+            <span class="record-badge badge-rock">Rock</span>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="record-sleeve" style="background: linear-gradient(135deg, #0a1020 0%, #1a2a3a 100%);">
+            <div class="record-sleeve-inner">🎺</div>
+          </div>
+          <div class="record-card-info">
+            <div class="record-artist">Miles Davis</div>
+            <div class="record-title">Kind of Blue</div>
+            <div class="record-meta">1959 · Columbia</div>
+            <span class="record-badge badge-jazz">Jazz</span>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="record-sleeve" style="background: linear-gradient(135deg, #1a1000 0%, #2a2010 100%);">
+            <div class="record-sleeve-inner">🎹</div>
+          </div>
+          <div class="record-card-info">
+            <div class="record-artist">Stevie Wonder</div>
+            <div class="record-title">Songs in the Key of Life</div>
+            <div class="record-meta">1976 · Tamla</div>
+            <span class="record-badge badge-soul">Soul</span>
+            <span class="record-badge badge-offers" style="margin-left:4px;">Offer rcvd</span>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="record-sleeve" style="background: linear-gradient(135deg, #0a0a20 0%, #1a1a40 100%);">
+            <div class="record-sleeve-inner">🎛️</div>
+          </div>
+          <div class="record-card-info">
+            <div class="record-artist">Kraftwerk</div>
+            <div class="record-title">Autobahn</div>
+            <div class="record-meta">1974 · Philips</div>
+            <span class="record-badge badge-electronic">Electronic</span>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="record-sleeve" style="background: linear-gradient(135deg, #1a0a0a 0%, #3a1010 100%);">
+            <div class="record-sleeve-inner">🎤</div>
+          </div>
+          <div class="record-card-info">
+            <div class="record-artist">David Bowie</div>
+            <div class="record-title">Ziggy Stardust</div>
+            <div class="record-meta">1972 · RCA</div>
+            <span class="record-badge badge-rock">Rock</span>
+          </div>
+        </div>
+        <div class="record-card">
+          <div class="record-sleeve" style="background: linear-gradient(135deg, #0a1a0a 0%, #102a10 100%);">
+            <div class="record-sleeve-inner">🎷</div>
+          </div>
+          <div class="record-card-info">
+            <div class="record-artist">John Coltrane</div>
+            <div class="record-title">A Love Supreme</div>
+            <div class="record-meta">1965 · Impulse!</div>
+            <span class="record-badge badge-jazz">Jazz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mv-tab-bar">
+      <div class="mv-tab active" onclick="showScreen('collection')"><i class="ti ti-vinyl" aria-hidden="true"></i>Collection</div>
+      <div class="mv-tab" onclick="showScreen('add')"><i class="ti ti-plus-circle" aria-hidden="true"></i>Add</div>
+      <div class="mv-tab" onclick="showScreen('market')"><i class="ti ti-tag" aria-hidden="true"></i>Offers</div>
+      <div class="mv-tab" onclick="showScreen('profile')"><i class="ti ti-user-circle" aria-hidden="true"></i>Profile</div>
+    </div>
+  </div>
+
+  <!-- RECORD DETAIL SCREEN -->
+  <div id="screen-detail" class="mv-screen">
+    <div class="mv-statusbar"><span>9:41</span><span>●●●</span></div>
+    <div class="mv-header">
+      <button class="back-btn" onclick="showScreen('collection')"><i class="ti ti-chevron-left" aria-hidden="true"></i> Collection</button>
+      <button class="mv-icon-btn"><i class="ti ti-edit" aria-hidden="true"></i></button>
+    </div>
+    <div class="mv-content">
+      <div class="detail-hero">
+        <div class="detail-sleeve" style="background: linear-gradient(135deg, #1a1020 0%, #3a1a2a 100%);">🎸</div>
+        <div>
+          <div class="detail-artist">Led Zeppelin</div>
+          <div class="detail-title">IV</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="record-badge badge-rock">Rock</span>
+            <span class="record-badge" style="background:#1a1a2a; color:#5a7aaa;">Hard Rock</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="discogs-badge">
+        <div class="discogs-dot"></div>
+        <div class="discogs-text">Verified on Discogs</div>
+        <div class="discogs-value">Cat. ATLK 50008</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Record details</div>
+        <div style="background:#2D2D2D; border-radius: 12px; padding: 0 16px;">
+          <div class="detail-row"><span class="detail-label">Label</span><span class="detail-value">Atlantic</span></div>
+          <div class="detail-row"><span class="detail-label">Year</span><span class="detail-value">1971</span></div>
+          <div class="detail-row"><span class="detail-label">Country</span><span class="detail-value">UK</span></div>
+          <div class="detail-row"><span class="detail-label">Format</span><span class="detail-value">LP, Album</span></div>
+          <div class="detail-row"><span class="detail-label">Condition</span><span class="detail-value">VG+</span></div>
+          <div class="detail-row" style="border:none;"><span class="detail-label">Pressing</span><span class="detail-value">1st UK</span></div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Market value (Discogs)</div>
+        <div style="background:#2D2D2D; border-radius: 12px; padding: 0 16px;">
+          <div class="detail-row"><span class="detail-label">Low</span><span class="detail-value" style="color:#4a9a4a;">£28.00</span></div>
+          <div class="detail-row"><span class="detail-label">Median</span><span class="detail-value" style="color:#C9A84C;">£75.00</span></div>
+          <div class="detail-row" style="border:none;"><span class="detail-label">High</span><span class="detail-value" style="color:#C0392B;">£240.00</span></div>
+        </div>
+      </div>
+
+      <div class="offer-toggle-row">
+        <div>
+          <div class="offer-toggle-label">Accept offers</div>
+          <div class="offer-toggle-sub">Let others make you an offer</div>
+        </div>
+        <div class="toggle"><div class="toggle-thumb"></div></div>
+      </div>
+
+      <div style="margin: 0 20px 16px;">
+        <div style="background:#2a1a00; border-radius: 12px; padding: 14px 16px; border: 0.5px solid #3a2a00;">
+          <div style="font-size:13px; color:#C9A84C; font-weight:500; margin-bottom:4px;"><i class="ti ti-tag" style="font-size:14px; vertical-align:-1px; margin-right:6px;" aria-hidden="true"></i>1 pending offer</div>
+          <div style="font-size:12px; color:#666;">@vinylhunter_uk offered £65.00 · 2 days ago</div>
+          <button style="margin-top:10px; background:#C9A84C; border:none; border-radius:8px; padding:8px 16px; font-size:13px; color:#1A1A1A; font-weight:500; cursor:pointer; font-family:Inter;" onclick="showScreen('market')">View Offer</button>
+        </div>
+      </div>
+    </div>
+    <div class="mv-tab-bar">
+      <div class="mv-tab" onclick="showScreen('collection')"><i class="ti ti-vinyl" aria-hidden="true"></i>Collection</div>
+      <div class="mv-tab" onclick="showScreen('add')"><i class="ti ti-plus-circle" aria-hidden="true"></i>Add</div>
+      <div class="mv-tab" onclick="showScreen('market')"><i class="ti ti-tag" aria-hidden="true"></i>Offers</div>
+      <div class="mv-tab" onclick="showScreen('profile')"><i class="ti ti-user-circle" aria-hidden="true"></i>Profile</div>
+    </div>
+  </div>
+
+  <!-- ADD RECORD SCREEN -->
+  <div id="screen-add" class="mv-screen">
+    <div class="mv-statusbar"><span>9:41</span><span>●●●</span></div>
+    <div class="mv-header">
+      <div class="mv-header-title">Add Record</div>
+    </div>
+    <div class="mv-content">
+      <div class="add-method-grid">
+        <div class="add-method-card">
+          <div class="add-method-icon"><i class="ti ti-camera" aria-hidden="true"></i></div>
+          <div class="add-method-title">Photograph label</div>
+          <div class="add-method-desc">Point camera at the record label. We'll identify it.</div>
+        </div>
+        <div class="add-method-card">
+          <div class="add-method-icon"><i class="ti ti-search" aria-hidden="true"></i></div>
+          <div class="add-method-title">Search Discogs</div>
+          <div class="add-method-desc">Search the Discogs database directly.</div>
+        </div>
+      </div>
+
+      <div class="camera-preview">
+        <i class="ti ti-camera" style="font-size:36px; color:#444;" aria-hidden="true"></i>
+        <div class="camera-text">Tap to open camera</div>
+      </div>
+
+      <div class="discogs-result">
+        <i class="ti ti-check" style="font-size:20px; color:#4a9a4a;" aria-hidden="true"></i>
+        <div>
+          <div class="discogs-result-title">Match found: Pink Floyd — The Wall</div>
+          <div class="discogs-result-meta">1979 · Harvest · SHDW 411 · 2xLP · UK 1st press</div>
+        </div>
+      </div>
+
+      <div style="margin: 0 20px 16px; font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px;">Confirm details</div>
+
+      <div class="mv-input-group">
+        <div class="mv-input-label">Artist</div>
+        <input class="mv-input" type="text" value="Pink Floyd" readonly>
+      </div>
+      <div class="mv-input-group">
+        <div class="mv-input-label">Title</div>
+        <input class="mv-input" type="text" value="The Wall" readonly>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin: 0 20px 14px;">
+        <div>
+          <div class="mv-input-label" style="font-size:12px; color:#666; margin-bottom:6px;">Year</div>
+          <input class="mv-input" type="text" value="1979" readonly>
+        </div>
+        <div>
+          <div class="mv-input-label" style="font-size:12px; color:#666; margin-bottom:6px;">Condition</div>
+          <select class="mv-select">
+            <option>M (Mint)</option>
+            <option>NM</option>
+            <option selected>VG+</option>
+            <option>VG</option>
+            <option>G+</option>
+          </select>
+        </div>
+      </div>
+      <div class="mv-input-group">
+        <div class="mv-input-label">Genre</div>
+        <select class="mv-select">
+          <option>Rock</option>
+          <option>Jazz</option>
+          <option>Soul / R&B</option>
+          <option>Electronic</option>
+          <option>Classical</option>
+          <option>Folk</option>
+          <option>Blues</option>
+        </select>
+      </div>
+      <div style="margin: 8px 20px 16px;">
+        <button class="mv-btn-primary" style="width:100%; border-radius:12px;" onclick="showScreen('collection')">
+          Add to Collection
+        </button>
+      </div>
+    </div>
+    <div class="mv-tab-bar">
+      <div class="mv-tab" onclick="showScreen('collection')"><i class="ti ti-vinyl" aria-hidden="true"></i>Collection</div>
+      <div class="mv-tab active" onclick="showScreen('add')"><i class="ti ti-plus-circle" aria-hidden="true"></i>Add</div>
+      <div class="mv-tab" onclick="showScreen('market')"><i class="ti ti-tag" aria-hidden="true"></i>Offers</div>
+      <div class="mv-tab" onclick="showScreen('profile')"><i class="ti ti-user-circle" aria-hidden="true"></i>Profile</div>
+    </div>
+  </div>
+
+  <!-- MARKETPLACE / OFFERS SCREEN -->
+  <div id="screen-market" class="mv-screen">
+    <div class="mv-statusbar"><span>9:41</span><span>●●●</span></div>
+    <div class="mv-header">
+      <div>
+        <div class="mv-header-title">Offers</div>
+        <div class="mv-header-sub">3 pending</div>
+      </div>
+      <button class="mv-icon-btn"><i class="ti ti-filter" aria-hidden="true"></i></button>
+    </div>
+    <div class="mv-content">
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-val">3</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-val">12</div><div class="stat-label">Received</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:#C9A84C;">£340</div><div class="stat-label">Sold</div></div>
+      </div>
+
+      <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin: 8px 20px 12px;">Pending offers</div>
+
+      <div class="offer-card">
+        <div class="offer-card-header">
+          <div class="offer-user">
+            <div class="offer-avatar">VH</div>
+            <div>
+              <div class="offer-username">@vinylhunter_uk</div>
+              <div class="offer-location">Manchester · ★ 4.9</div>
+            </div>
+          </div>
+          <div class="offer-amount">£65</div>
+        </div>
+        <div style="background:#1A1A1A; border-radius:10px; padding:12px;">
+          <div class="offer-record-title">Led Zeppelin IV</div>
+          <div class="offer-record-sub">Your listing · Market median: £75</div>
+        </div>
+        <div style="font-size:12px; color:#555; margin-top:8px;">"Happy to collect in person or pay shipping."</div>
+        <div class="offer-actions">
+          <button class="offer-btn-accept">Accept £65</button>
+          <button class="offer-btn-decline">Decline</button>
+          <div class="offer-btn-message"><i class="ti ti-message" style="font-size:18px;" aria-hidden="true"></i></div>
+        </div>
+      </div>
+
+      <div class="offer-card">
+        <div class="offer-card-header">
+          <div class="offer-user">
+            <div class="offer-avatar" style="background:#2D4A8A;">RP</div>
+            <div>
+              <div class="offer-username">@recordpicker</div>
+              <div class="offer-location">London · ★ 4.7</div>
+            </div>
+          </div>
+          <div class="offer-amount">£88</div>
+        </div>
+        <div style="background:#1A1A1A; border-radius:10px; padding:12px;">
+          <div class="offer-record-title">Songs in the Key of Life</div>
+          <div class="offer-record-sub">Your listing · Market median: £95</div>
+        </div>
+        <div style="font-size:12px; color:#555; margin-top:8px;">"Looking for a clean original pressing."</div>
+        <div class="offer-actions">
+          <button class="offer-btn-accept">Accept £88</button>
+          <button class="offer-btn-decline">Decline</button>
+          <div class="offer-btn-message"><i class="ti ti-message" style="font-size:18px;" aria-hidden="true"></i></div>
+        </div>
+      </div>
+
+      <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin: 16px 20px 12px;">Records you're seeking</div>
+      <div style="margin: 0 20px 20px; background:#2D2D2D; border-radius:14px; padding:16px; border: 0.5px dashed #444;">
+        <div style="font-size:13px; color:#666; margin-bottom:12px;">Add records you're looking for — other collectors can match them to their for-sale listings.</div>
+        <button class="mv-btn-primary" style="border-radius:10px; padding:12px; font-size:14px; width:100%;">
+          <i class="ti ti-plus" style="font-size:14px; vertical-align:-1px; margin-right:6px;" aria-hidden="true"></i>Add want
+        </button>
+      </div>
+    </div>
+    <div class="mv-tab-bar">
+      <div class="mv-tab" onclick="showScreen('collection')"><i class="ti ti-vinyl" aria-hidden="true"></i>Collection</div>
+      <div class="mv-tab" onclick="showScreen('add')"><i class="ti ti-plus-circle" aria-hidden="true"></i>Add</div>
+      <div class="mv-tab active" onclick="showScreen('market')"><i class="ti ti-tag" aria-hidden="true"></i>Offers</div>
+      <div class="mv-tab" onclick="showScreen('profile')"><i class="ti ti-user-circle" aria-hidden="true"></i>Profile</div>
+    </div>
+  </div>
+
+  <!-- PROFILE SCREEN -->
+  <div id="screen-profile" class="mv-screen">
+    <div class="mv-statusbar"><span>9:41</span><span>●●●</span></div>
+    <div class="mv-header">
+      <div class="mv-header-title">Profile</div>
+      <button class="mv-icon-btn"><i class="ti ti-settings" aria-hidden="true"></i></button>
+    </div>
+    <div class="mv-content">
+      <div class="profile-hero">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar">RT</div>
+          <div class="profile-public-badge">Public</div>
+        </div>
+        <div class="profile-name">Richard T.</div>
+        <div class="profile-handle">@richardvinyls</div>
+        <div class="profile-joined">Member since March 2025 · 47 records</div>
+        <div style="display:flex; gap:24px; margin-top:16px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Playfair Display'; font-size:20px; color:#F5EFE0; font-weight:700;">47</div>
+            <div style="font-size:11px; color:#555;">Records</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Playfair Display'; font-size:20px; color:#F5EFE0; font-weight:700;">12</div>
+            <div style="font-size:11px; color:#555;">For sale</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Playfair Display'; font-size:20px; color:#C9A84C; font-weight:700;">★4.9</div>
+            <div style="font-size:11px; color:#555;">Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pref-section">
+        <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Collection privacy</div>
+        <div style="background:#2D2D2D; border-radius:12px; padding:0 16px;">
+          <div class="pref-row">
+            <div>
+              <div class="pref-label">Public catalogue</div>
+              <div style="font-size:11px; color:#555;">Others can browse your collection</div>
+            </div>
+            <div class="toggle"><div class="toggle-thumb"></div></div>
+          </div>
+          <div class="pref-row" style="border:none;">
+            <div>
+              <div class="pref-label">Accept offers</div>
+              <div style="font-size:11px; color:#555;">Allow offers on your records</div>
+            </div>
+            <div class="toggle"><div class="toggle-thumb"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1px; margin: 0 20px 10px;">Favourite genres</div>
+      <div class="genre-tag-row">
+        <span class="genre-tag fav">Rock</span>
+        <span class="genre-tag fav">Jazz</span>
+        <span class="genre-tag fav">Soul</span>
+        <span class="genre-tag">Electronic</span>
+        <span class="genre-tag">Blues</span>
+        <span class="genre-tag">Folk</span>
+        <span class="genre-tag">Classical</span>
+        <span class="genre-tag">Reggae</span>
+      </div>
+
+      <div class="pref-section" style="margin-top:16px;">
+        <div style="background:#2D2D2D; border-radius:12px; padding:0 16px;">
+          <div class="pref-row">
+            <span class="pref-label">Discogs account linked</span>
+            <div style="display:flex; align-items:center; gap:6px;"><div style="width:8px;height:8px;border-radius:50%;background:#4a9a4a;"></div><span class="pref-value">Connected</span></div>
+          </div>
+          <div class="pref-row">
+            <span class="pref-label">Notifications</span>
+            <span class="pref-value">Offers, messages</span>
+          </div>
+          <div class="pref-row" style="border:none;">
+            <span class="pref-label">Currency</span>
+            <span class="pref-value">GBP (£)</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin: 8px 20px 24px; text-align:center;">
+        <div style="font-size:11px; color:#555;">My Vinyl v1.0 · © The Naked Film Co Ltd</div>
+      </div>
+    </div>
+    <div class="mv-tab-bar">
+      <div class="mv-tab" onclick="showScreen('collection')"><i class="ti ti-vinyl" aria-hidden="true"></i>Collection</div>
+      <div class="mv-tab" onclick="showScreen('add')"><i class="ti ti-plus-circle" aria-hidden="true"></i>Add</div>
+      <div class="mv-tab" onclick="showScreen('market')"><i class="ti ti-tag" aria-hidden="true"></i>Offers</div>
+      <div class="mv-tab active" onclick="showScreen('profile')"><i class="ti ti-user-circle" aria-hidden="true"></i>Profile</div>
+    </div>
+  </div>
+
+</div>
+
+<div style="text-align:center; margin-top:16px; font-size:12px; color: var(--color-text-secondary);">
+  Tap the nav tabs and cards to explore each screen
+</div>
+
+</div>
+
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.mv-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+</script>
