@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Vinyl Live">
+<title>My Vinyl Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;--sf:#111;--sf2:#090909;--bd:#1c1c1c;--bd2:#282828;
+  --w:#f2f2f6;--mu:#666;
+  --green:#1df5aa;--gdim:#0daa70;--gbg:#071210;
+  --pink:#ff3080;--pdim:#cc2060;--pbg:#160610;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;width:100%;background:#000;color:var(--w);font-family:'Inter',-apple-system,sans-serif;overflow:hidden;-webkit-text-size-adjust:100%}
+/* GLOWS inside splash only */
+@keyframes glowG{0%{top:-80%;left:-80%;opacity:0}15%{opacity:1}100%{top:-20%;left:-15%;opacity:1}}
+@keyframes glowP{0%{top:90%;right:-90%;opacity:0}15%{opacity:1}100%{top:25%;right:-18%;opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shazPulse{0%{box-shadow:0 0 0 0 rgba(255,48,128,.5)}70%{box-shadow:0 0 0 18px rgba(255,48,128,0)}100%{box-shadow:0 0 0 0 rgba(255,48,128,0)}}
+.app{display:flex;flex-direction:column;height:100dvh;width:100%;overflow:hidden;position:relative;z-index:1}
+.scr{display:none;flex-direction:column;flex:1;overflow:hidden;background:#000}
+.scr.on{display:flex}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:90px}
+.scroll::-webkit-scrollbar{display:none}
+/* STATUS */
+.sb{padding-top:var(--sat);padding-left:22px;padding-right:22px;display:flex;justify-content:space-between;font-size:12px;color:var(--mu);font-family:'DM Mono';min-height:calc(var(--sat) + 22px);flex-shrink:0}
+/* HEADER */
+.hdr{padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ht{font-size:26px;font-weight:700;color:var(--w);letter-spacing:-.5px}
+.hs{font-size:13px;color:var(--mu);margin-top:2px}
+.hr{display:flex;gap:8px;align-items:center}
+.ib{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.06);border:.5px solid var(--bd2);color:var(--w);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* NAV — always visible, hides behind splash */
+.nav{position:fixed;bottom:0;left:0;right:0;background:#0a0a0a;border-top:1px solid #2a2a2a;display:flex;padding-top:8px;padding-bottom:calc(8px + var(--sab));z-index:100}
+.scr.on#s-splash ~ .nav{display:none}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:#555;font-size:9px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .15s;min-height:44px;justify-content:center}
+.tab i{font-size:22px}
+.tab.on{color:var(--green)}
+/* SEARCH */
+.sw{padding:0 16px 10px}
+.sbar{background:rgba(255,255,255,.05);border:.5px solid var(--bd2);border-radius:14px;display:flex;align-items:center;gap:10px;padding:13px 16px}
+.sbar input{background:none;border:none;color:var(--w);font-size:16px;flex:1;outline:none;font-family:'Inter'}
+.sbar input::placeholder{color:#333}
+/* SORT */
+.sort{display:flex;align-items:center;padding:0 16px 10px;gap:6px;overflow-x:auto}
+.sort::-webkit-scrollbar{display:none}
+.slbl{font-size:12px;color:var(--mu);flex-shrink:0}
+.sp{background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:20px;padding:7px 14px;font-size:13px;color:#555;white-space:nowrap;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:5px;transition:all .15s}
+.sp.on{background:var(--gbg);border-color:var(--gdim);color:var(--green)}
+.sp i{font-size:13px}
+/* VIEW TOGGLE */
+.vb{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.04);border:.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#555;-webkit-tap-highlight-color:transparent}
+.vb.on{background:var(--gbg);border-color:var(--gdim);color:var(--green)}
+/* GENRE FILTER */
+.gf{display:flex;gap:7px;padding:0 16px 12px;overflow-x:auto}
+.gf::-webkit-scrollbar{display:none}
+.gp2{background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:20px;padding:7px 14px;font-size:13px;color:#555;white-space:nowrap;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.gp2.on{background:var(--pbg);border-color:var(--pdim);color:var(--pink)}
+/* GENRE GRID */
+.ggrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px}
+.gc{border-radius:16px;overflow:hidden;border:.5px solid var(--bd2);background:var(--sf)}
+.gc-hdr{padding:14px 14px 10px}
+.gc-name{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-family:'DM Mono'}
+.gc-cnt{font-size:11px;color:#555;font-family:'DM Mono'}
+.gc-strip{display:flex;gap:8px;overflow-x:auto;padding:0 14px 14px;-webkit-overflow-scrolling:touch}
+.gc-strip::-webkit-scrollbar{display:none}
+.gc-alb{flex-shrink:0;width:72px;border-radius:8px;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gc-alb:active{opacity:.8}
+.gc-cov{width:72px;height:72px;position:relative;overflow:hidden}
+.gc-aname{font-size:9px;font-weight:600;color:var(--w);padding:4px 5px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc-aartist{font-size:9px;color:#555;padding:0 5px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'DM Mono'}
+/* LIST VIEW */
+.lv{padding:0 16px}
+.ah{font-family:'DM Mono';font-size:12px;color:var(--gdim);letter-spacing:2px;padding:10px 0 4px;border-bottom:.5px solid var(--bd);margin-bottom:2px}
+.lrow{border-bottom:.5px solid var(--bd)}
+.lrow:last-child{border:none}
+.lr-hdr{display:flex;align-items:center;padding:12px 0;cursor:pointer;gap:12px;-webkit-tap-highlight-color:transparent;width:100%}
+.lr-hdr:active{background:rgba(255,255,255,.02)}
+.lr-chev{font-size:18px;color:var(--mu);flex-shrink:0;transition:transform .25s}
+.lr-tracks{background:rgba(255,255,255,.02);border-top:.5px solid var(--bd)}
+.trn{font-family:'DM Mono';font-size:11px;color:var(--bd2);min-width:24px;text-align:right;flex-shrink:0}
+.trm{flex:1;min-width:0}
+.tra{font-size:16px;font-weight:600;color:var(--w);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trt{font-size:13px;color:var(--mu);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trx{font-family:'DM Mono';font-size:10px;color:#444;margin-top:3px}
+.trr{text-align:right;flex-shrink:0}
+.try{font-family:'DM Mono';font-size:11px;color:#555}
+.tt{display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;margin-top:3px}
+.tt-r{background:#1a0510;color:#cc44aa}
+.tt-j{background:var(--gbg);color:var(--gdim)}
+.tt-s{background:#0e0520;color:#9966ee}
+.tt-e{background:var(--pbg);color:var(--pdim)}
+.tro{font-size:10px;color:var(--gdim);margin-top:3px;display:flex;align-items:center;gap:3px}
+.fmt-sm{font-family:'DM Mono';font-size:9px;color:var(--green);background:var(--gbg);border:.5px solid var(--gdim);border-radius:4px;padding:1px 5px;margin-top:3px;display:inline-block}
+/* TRACK LISTING */
+.track-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.track-side{padding:7px 16px 3px;background:rgba(255,255,255,.02)}
+.side-lbl{font-family:'DM Mono';font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:1.5px;font-weight:500}
+.track-row{display:flex;align-items:center;padding:10px 16px;border-top:.5px solid var(--bd);gap:12px}
+.track-num{font-family:'DM Mono';font-size:11px;color:var(--mu);min-width:26px;flex-shrink:0}
+.track-title{flex:1;font-size:14px;color:var(--w)}
+.track-dur{font-family:'DM Mono';font-size:11px;color:var(--mu);flex-shrink:0}
+/* DETAIL */
+.dh2{padding:10px 20px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.back{background:none;border:none;color:var(--green);font-size:16px;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'Inter';font-weight:500;-webkit-tap-highlight-color:transparent}
+.dhero{margin:0 16px 14px;background:rgba(255,255,255,.04);border-radius:16px;padding:18px;display:flex;gap:16px;border:.5px solid var(--bd2)}
+.dico{width:88px;height:88px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--sf2);overflow:hidden}
+.da{font-size:12px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.dt{font-size:22px;font-weight:700;color:var(--w);margin:4px 0 8px;line-height:1.2;letter-spacing:-.3px}
+.dc2{margin:0 16px 12px;background:rgba(255,255,255,.04);border-radius:12px;padding:0 16px;border:.5px solid var(--bd2)}
+.dr{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:.5px solid var(--bd)}
+.dr:last-child{border:none}
+.dl{font-size:14px;color:var(--mu)}
+.dv{font-family:'DM Mono';font-size:14px;color:var(--w)}
+.slb{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1.5px;margin:0 16px 8px;font-family:'DM Mono'}
+.vrow{margin:0 16px 12px;background:var(--gbg);border:.5px solid var(--gdim);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px}
+.tog-row{margin:0 16px 12px;background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:14px;padding:15px 16px;display:flex;justify-content:space-between;align-items:center}
+.tog{width:48px;height:28px;border-radius:14px;background:var(--green);position:relative;cursor:pointer;flex-shrink:0}
+.tg2{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:#000}
+.tog.off{background:rgba(255,255,255,.15)}
+.tog.off .tg2{right:auto;left:4px}
+.oa{margin:0 16px 16px;background:var(--pbg);border:.5px solid var(--pdim);border-radius:14px;padding:15px 16px}
+.oat{font-size:15px;color:var(--pink);font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.oas2{font-size:13px;color:#884455}
+.bpink{margin-top:12px;background:var(--pink);border:none;border-radius:10px;padding:12px 20px;font-size:15px;color:#fff;font-weight:600;cursor:pointer;font-family:'Inter'}
+/* ADD */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;margin-bottom:14px}
+.mc{background:rgba(255,255,255,.04);border-radius:16px;padding:18px 14px;text-align:center;cursor:pointer;border:.5px solid var(--bd2);-webkit-tap-highlight-color:transparent}
+.mi{font-size:30px;color:var(--green);margin-bottom:8px}
+.mtl{font-size:16px;font-weight:600;color:var(--w);margin-bottom:3px}
+.mds{font-size:12px;color:#555;line-height:1.4}
+.cam{margin:0 16px 12px;background:rgba(0,0,0,.4);border-radius:14px;height:150px;display:flex;align-items:center;justify-content:center;border:.5px dashed var(--bd2);flex-direction:column;gap:8px}
+.mb2{margin:0 16px 12px;background:var(--gbg);border:.5px solid var(--gdim);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.inp{width:100%;background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:12px;padding:13px 15px;color:var(--w);font-size:16px;font-family:'Inter';outline:none}
+.inp:focus{border-color:var(--green)}
+.sel{width:100%;background:rgba(255,255,255,.05);border:.5px solid var(--bd2);border-radius:12px;padding:13px 15px;color:var(--w);font-size:16px;font-family:'Inter';outline:none;-webkit-appearance:none}
+.ig{margin:0 16px 10px}
+.il{font-size:13px;color:var(--mu);margin-bottom:5px;font-weight:500}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 10px}
+.bgreen{width:100%;background:var(--green);border:none;border-radius:14px;padding:16px;font-size:17px;font-weight:700;color:#000;cursor:pointer;font-family:'Inter'}
+/* EVENTS */
+.lbar{display:flex;align-items:center;gap:6px;padding:0 16px 10px}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.ltxt{font-size:14px;color:var(--mu)}
+.lcnt{font-size:14px;color:var(--green);font-weight:600;margin-left:auto}
+.mc3{margin:0 16px 14px;border-radius:14px;height:155px;position:relative;overflow:hidden;border:.5px solid var(--bd2);background:#000}
+.mgrd{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 24px,rgba(255,255,255,.02) 25px),repeating-linear-gradient(90deg,transparent,transparent 24px,rgba(255,255,255,.02) 25px)}
+.mgg{position:absolute;top:-30%;left:-20%;width:65%;height:80%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(15,180,95,.32) 0%,transparent 65%);filter:blur(18px)}
+.mgp2{position:absolute;top:5%;right:-20%;width:55%;height:70%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(200,30,200,.28) 0%,transparent 65%);filter:blur(18px)}
+.myo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:var(--green);z-index:3}
+.mr{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1px solid rgba(29,245,170,.15);z-index:2}
+.mpin{position:absolute;display:flex;flex-direction:column;align-items:center;z-index:4}
+.mpd{width:9px;height:9px;border-radius:50%;border:2px solid #000}
+.mpl{font-family:'DM Mono';font-size:8px;margin-top:3px;white-space:nowrap}
+.mft{position:absolute;bottom:8px;left:12px;font-family:'DM Mono';font-size:9px;color:#444;z-index:5}
+.mex{position:absolute;bottom:8px;right:12px;background:rgba(255,255,255,.06);border:.5px solid var(--bd2);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--mu);cursor:pointer;display:flex;align-items:center;gap:3px;z-index:5}
+.ef{display:flex;gap:7px;padding:0 16px 12px;overflow-x:auto}
+.ef::-webkit-scrollbar{display:none}
+.ep{background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:20px;padding:7px 14px;font-size:13px;color:#555;white-space:nowrap;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.ep.on{background:var(--gbg);border-color:var(--gdim);color:var(--green)}
+.esl{font-family:'DM Mono';font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1.5px;margin:4px 16px 10px}
+.er{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-bottom:.5px solid var(--bd);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.er:last-child{border:none}
+.ed{background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;text-align:center;flex-shrink:0;min-width:44px;border:.5px solid var(--bd2)}
+.eday{font-size:20px;font-weight:700;color:var(--w);line-height:1}
+.emon{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:2px;font-family:'DM Mono'}
+.eb{flex:1;min-width:0}
+.eart{font-size:16px;font-weight:600;color:var(--w);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.even{font-size:13px;color:var(--mu);margin-bottom:6px}
+.etags{display:flex;gap:5px;flex-wrap:wrap}
+.et{font-size:10px;padding:2px 7px;border-radius:3px}
+.et-m{background:var(--gbg);color:var(--gdim)}
+.et-g{background:var(--pbg);color:var(--pdim)}
+.et-e{background:#15100a;color:#887040}
+.er2{text-align:right;flex-shrink:0}
+.eprc{font-family:'DM Mono';font-size:13px;color:var(--w);font-weight:700}
+.edst{font-family:'DM Mono';font-size:10px;color:#555;margin-top:2px}
+.ehrt{font-size:17px;color:#333;margin-top:5px;display:block}
+.ehrt.sv{color:var(--pink)}
+.nc{margin:0 16px 10px;border-radius:16px;overflow:hidden;border:.5px solid var(--bd2);background:var(--sf)}
+.nt{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;position:relative;overflow:hidden}
+.ntg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 0% 0%,rgba(15,180,95,.15) 0%,transparent 55%),radial-gradient(ellipse at 100% 0%,rgba(255,48,128,.13) 0%,transparent 55%)}
+.nb{font-family:'DM Mono';font-size:10px;background:var(--green);color:#000;border-radius:5px;padding:3px 8px;font-weight:700;position:relative;z-index:1;display:inline-block}
+.nprc{font-family:'DM Mono';font-size:13px;color:var(--w);position:relative;z-index:1;font-weight:700}
+.nart{font-size:19px;font-weight:700;color:var(--w);margin:10px 0 3px;letter-spacing:-.3px;position:relative;z-index:1}
+.nven{font-size:12px;color:var(--mu);position:relative;z-index:1}
+.nbd{padding:12px 18px 16px;border-top:.5px solid var(--bd)}
+.nm{display:flex;align-items:center;gap:7px;background:var(--gbg);border-radius:10px;padding:9px 12px;margin-bottom:10px;border:.5px solid rgba(13,144,96,.2)}
+.nmt{font-size:13px;color:var(--gdim)}
+.ntags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.nact{display:flex;gap:8px}
+.btix{flex:1;background:var(--green);border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;color:#000;cursor:pointer;font-family:'Inter';display:flex;align-items:center;justify-content:center;gap:6px;-webkit-tap-highlight-color:transparent}
+.bsav{width:46px;background:transparent;border:.5px solid var(--bd2);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;font-size:20px}
+/* OFFERS */
+.sr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 16px 14px}
+.sc{background:rgba(255,255,255,.04);border-radius:12px;padding:13px 8px;text-align:center;border:.5px solid var(--bd2)}
+.sv2{font-size:24px;font-weight:700;color:var(--w);font-family:'DM Mono'}
+.sl2{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;font-family:'DM Mono'}
+.oc{margin:0 16px 10px;background:rgba(255,255,255,.04);border-radius:16px;padding:15px;border:.5px solid var(--bd2)}
+.oh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.ou{display:flex;align-items:center;gap:10px}
+.av{width:38px;height:38px;border-radius:50%;background:var(--gbg);border:1px solid var(--gdim);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--green);font-weight:700;flex-shrink:0;font-family:'DM Mono'}
+.on2{font-size:15px;color:var(--w);font-weight:600}
+.ol2{font-size:12px;color:#555}
+.oa2{font-size:22px;font-weight:700;color:var(--green);font-family:'DM Mono'}
+.ore{background:rgba(0,0,0,.35);border-radius:10px;padding:11px 13px;margin-bottom:8px}
+.ort{font-size:15px;font-weight:600;color:var(--w);margin-bottom:2px}
+.ors{font-size:12px;color:var(--mu)}
+.ono{font-size:13px;color:#666;margin-bottom:10px;line-height:1.5}
+.oac{display:flex;gap:8px}
+.bacc{flex:1;background:var(--green);border:none;border-radius:10px;padding:13px;color:#000;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter'}
+.bdec{flex:1;background:transparent;border:.5px solid var(--bd2);border-radius:10px;padding:13px;color:var(--mu);font-size:15px;cursor:pointer;font-family:'Inter'}
+.bmsg{width:46px;background:transparent;border:.5px solid var(--bd2);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#555;font-size:18px}
+/* WANT LIST */
+.wrow{border-bottom:.5px solid var(--bd)}
+.wrow:last-of-type{border:none}
+.wr-main{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.wr-chev{font-size:18px;color:var(--mu);flex-shrink:0;transition:transform .25s;margin-left:auto}
+.wr-detail{background:rgba(255,255,255,.02);border-top:.5px solid var(--bd)}
+.wr-owners{font-size:10px;color:var(--gdim);margin-top:4px;font-family:'DM Mono'}
+.wr-orow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:.5px solid var(--bd)}
+.wr-msg{width:34px;height:34px;background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#777;font-size:16px;margin-left:auto;flex-shrink:0}
+/* GIG RECORDS */
+.gig-card{margin:0 16px 10px;background:var(--sf);border-radius:14px;overflow:hidden;border:.5px solid var(--bd2);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gig-hdr{display:flex;align-items:flex-start;gap:14px;padding:14px 16px}
+.gig-date{background:var(--bg);border-radius:10px;padding:9px;text-align:center;flex-shrink:0;min-width:44px;border:.5px solid var(--bd2)}
+.gig-body{border-top:.5px solid var(--bd)}
+.gig-slbl{font-family:'DM Mono';font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1.5px;padding:12px 16px 7px}
+.gig-setlist{padding:0 16px}
+.gig-track{display:flex;gap:10px;padding:8px 0;border-bottom:.5px solid var(--bd)}
+.gig-track:last-child{border:none}
+.gig-tnum{font-family:'DM Mono';font-size:11px;color:#555;min-width:20px;flex-shrink:0}
+.gig-ttitle{font-size:14px;color:var(--w)}
+.gig-ftag{font-size:13px;color:var(--w);background:rgba(255,255,255,.06);border:.5px solid var(--bd2);border-radius:20px;padding:5px 12px}
+/* PROFILE */
+.ph2{padding:16px 20px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.pav{width:80px;height:80px;border-radius:50%;background:var(--gbg);border:2px solid var(--gdim);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--green);font-weight:700;font-family:'DM Mono';margin-bottom:12px}
+.pn{font-size:24px;font-weight:700;color:var(--w);letter-spacing:-.3px}
+.phandle{font-size:14px;color:var(--green);margin-top:3px}
+.pj{font-size:12px;color:#555;margin-top:4px}
+.pstats{display:flex;gap:28px;margin-top:14px}
+.pst{text-align:center}
+.psv{font-size:22px;font-weight:700;color:var(--w);font-family:'DM Mono'}
+.psl{font-size:10px;color:#555;margin-top:2px}
+.pc{margin:0 16px 12px;background:rgba(255,255,255,.04);border-radius:12px;padding:0 16px;border:.5px solid var(--bd2)}
+.pr{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:.5px solid var(--bd)}
+.pr:last-child{border:none}
+.prl{font-size:15px;color:var(--w);font-weight:500}
+.prs{font-size:12px;color:#555;margin-top:2px}
+.prv{font-size:13px;color:#666}
+.gt{display:flex;flex-wrap:wrap;gap:7px;margin:0 16px 14px}
+.gtg{background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:20px;padding:6px 14px;font-size:13px;color:#666}
+.gtg.on{border-color:var(--gdim);color:var(--green);background:var(--gbg)}
+/* SPLASH */
+.spl{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px 60px;position:relative;z-index:1}
+.stt{font-size:52px;font-weight:700;color:#fff;letter-spacing:-2px;line-height:1;text-align:center;margin-bottom:12px}
+.sst{font-size:15px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-bottom:50px;font-family:'DM Mono'}
+.bg2{background:var(--pink);color:#fff;border:none;border-radius:50px;padding:17px 0;width:100%;max-width:320px;font-family:'Inter';font-size:18px;font-weight:700;cursor:pointer;margin-bottom:12px;-webkit-tap-highlight-color:transparent}
+.bo{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);border-radius:50px;padding:17px 0;width:100%;max-width:320px;font-family:'Inter';font-size:18px;cursor:pointer}
+/* FOCUS */
+button:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sb"><span>9:41</span><span style="letter-spacing:2px">&#9679;&#9679;&#9679;</span></div>
+
+<!-- SPLASH -->
+<div id="s-splash" class="scr on" style="position:relative;overflow:hidden">
+  <div style="position:absolute;width:80%;height:70%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(15,180,95,.80) 0%,rgba(8,110,60,.35) 38%,transparent 70%);filter:blur(50px);pointer-events:none;z-index:0;animation:glowG 3.2s cubic-bezier(.16,1,.3,1) forwards"></div>
+  <div style="position:absolute;width:70%;height:65%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,48,128,.75) 0%,rgba(180,20,90,.32) 38%,transparent 70%);filter:blur(50px);pointer-events:none;z-index:0;animation:glowP 3.2s cubic-bezier(.16,1,.3,1) forwards"></div>
+  <div class="spl" style="animation:fadeUp .8s ease .9s both">
+    <div class="stt">My Vinyl Live</div>
+    <div class="sst">Your collection. Your events.</div>
+    <button class="bg2" onclick="go('col','tab-col')">Sign in</button>
+    <button class="bo" onclick="go('col','tab-col')">Create account</button>
+  </div>
+</div>
+
+<!-- COLLECTION -->
+<div id="s-col" class="scr">
+  <div class="hdr">
+    <div><div class="ht">Collection</div><div class="hs">47 records</div></div>
+    <div class="hr">
+      <div style="display:flex;gap:4px">
+        <div class="vb on" id="vg" onclick="sv('grid')" role="button" aria-label="Grid view"><i class="ti ti-grid-dots"></i></div>
+        <div class="vb" id="vl" onclick="sv('list')" role="button" aria-label="List view"><i class="ti ti-list"></i></div>
+      </div>
+      <button class="ib" onclick="go('add','tab-add')" aria-label="Add record"><i class="ti ti-plus"></i></button>
+    </div>
+  </div>
+  <div class="sw"><div class="sbar"><i class="ti ti-search" style="color:#333;font-size:17px"></i><input type="text" placeholder="Artist, title, label, year&hellip;"></div></div>
+  <div class="gf">
+    <span class="gp2 on" onclick="sg(this)">All</span>
+    <span class="gp2" onclick="sg(this)">Rock</span>
+    <span class="gp2" onclick="sg(this)">Jazz</span>
+    <span class="gp2" onclick="sg(this)">Soul</span>
+    <span class="gp2" onclick="sg(this)">Electronic</span>
+    <span class="gp2" onclick="sg(this)">Blues</span>
+    <span class="gp2" onclick="sg(this)">Classical</span>
+  </div>
+  <div class="scroll">
+    <!-- GENRE GRID -->
+    <div id="v-grid" class="ggrid">
+      <div class="gc">
+        <div class="gc-hdr" style="background:linear-gradient(160deg,#120308,#200510)">
+          <div style="font-size:38px">&#127928;</div>
+          <div class="gc-name" style="color:#cc44bb">Rock</div>
+          <div class="gc-cnt">28 records</div>
+        </div>
+        <div class="gc-strip">
+          <div class="gc-alb" onclick="openAlbum('lz4')"><div class="gc-cov" style="background:linear-gradient(160deg,#2c1a08,#0e0804)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-size:11px">&#9775;&#9769;&#9800;&#9767;</div></div><div class="gc-aname">IV</div><div class="gc-aartist">Led Zeppelin</div></div>
+          <div class="gc-alb" onclick="openAlbum('ziggy')"><div class="gc-cov" style="background:linear-gradient(160deg,#0a1a2e,#1a0a00)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="width:26px;height:42px;background:linear-gradient(135deg,#e8b84b,#c8941e);clip-path:polygon(50% 0%,100% 15%,75% 50%,100% 85%,50% 100%,0% 85%,25% 50%,0% 15%);opacity:.8"></div></div></div><div class="gc-aname">Ziggy Stardust</div><div class="gc-aartist">Bowie</div></div>
+          <div class="gc-alb" onclick="openAlbum('wall')"><div class="gc-cov" style="background:#e8e4dc"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><svg width="36" height="56" viewBox="0 0 36 56"><path d="M18 4 L20 24 L28 28 L16 32 L20 52" stroke="#1a1a1a" stroke-width="1.5" fill="none" opacity=".55"/></svg></div></div><div class="gc-aname">The Wall</div><div class="gc-aartist">Pink Floyd</div></div>
+          <div class="gc-alb" onclick="openAlbum('darkside')"><div class="gc-cov" style="background:#000"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><svg width="60" height="60" viewBox="0 0 60 60"><polygon points="30,6 52,48 8,48" fill="none" stroke="white" stroke-width="1"/><line x1="30" y1="6" x2="50" y2="48" stroke="url(#rg)" stroke-width="7" opacity=".9"/><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f00"/><stop offset="33%" stop-color="#ff0"/><stop offset="66%" stop-color="#0f0"/><stop offset="100%" stop-color="#00f"/></linearGradient></defs></svg></div></div><div class="gc-aname">Dark Side</div><div class="gc-aartist">Pink Floyd</div></div>
+          <div class="gc-alb" onclick="openAlbum('rumours')"><div class="gc-cov" style="background:linear-gradient(160deg,#3d2b1a,#1a1008)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:.6">&#128131;</div></div><div class="gc-aname">Rumours</div><div class="gc-aartist">Fleetwood Mac</div></div>
+          <div class="gc-alb" onclick="openAlbum('bib')"><div class="gc-cov" style="background:#0a0a0a;border:1px solid #222"><div style="position:absolute;inset:4px;border:.5px solid #333;display:flex;align-items:center;justify-content:center;font-size:7px;color:#444;font-family:'DM Mono';letter-spacing:2px;text-align:center;line-height:1.8">AC&#10;DC</div></div><div class="gc-aname">Back in Black</div><div class="gc-aartist">AC/DC</div></div>
+        </div>
+      </div>
+      <div class="gc">
+        <div class="gc-hdr" style="background:linear-gradient(160deg,#030e07,#051a0c)">
+          <div style="font-size:38px">&#127927;</div>
+          <div class="gc-name" style="color:var(--gdim)">Jazz</div>
+          <div class="gc-cnt">9 records</div>
+        </div>
+        <div class="gc-strip">
+          <div class="gc-alb" onclick="openAlbum('kob')"><div class="gc-cov" style="background:linear-gradient(160deg,#1a2a3a,#080e14)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px"><div style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(100,150,200,.4);display:flex;align-items:center;justify-content:center;font-size:13px">&#127927;</div><div style="font-size:6px;color:rgba(150,190,230,.4);font-family:'DM Mono';letter-spacing:1px;text-transform:uppercase;margin-top:2px">Miles Davis</div></div></div><div class="gc-aname">Kind of Blue</div><div class="gc-aartist">Miles Davis</div></div>
+          <div class="gc-alb" onclick="openAlbum('als')"><div class="gc-cov" style="background:linear-gradient(160deg,#1a1a1a,#0a0a0a)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:rgba(255,255,255,.6);font-family:'DM Mono';letter-spacing:1px;text-transform:uppercase;text-align:center;line-height:2">A LOVE<br>SUPREME<br>COLTRANE</div></div><div class="gc-aname">A Love Supreme</div><div class="gc-aartist">Coltrane</div></div>
+          <div class="gc-alb" onclick="openAlbum('debby')"><div class="gc-cov" style="background:linear-gradient(160deg,#2a200e,#1a1408)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px">&#127929;</div></div><div class="gc-aname">Waltz for Debby</div><div class="gc-aartist">Bill Evans</div></div>
+          <div class="gc-alb" onclick="openAlbum('kob')"><div class="gc-cov" style="background:linear-gradient(160deg,#0e1a0a,#08100a)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:rgba(150,200,120,.5);font-family:'DM Mono';text-transform:uppercase;text-align:center;line-height:2">MINGUS<br>AH UM</div></div><div class="gc-aname">Mingus Ah Um</div><div class="gc-aartist">Mingus</div></div>
+        </div>
+      </div>
+      <div class="gc">
+        <div class="gc-hdr" style="background:linear-gradient(160deg,#07030e,#0f0520)">
+          <div style="font-size:38px">&#127929;</div>
+          <div class="gc-name" style="color:var(--pdim)">Electronic</div>
+          <div class="gc-cnt">6 records</div>
+        </div>
+        <div class="gc-strip">
+          <div class="gc-alb" onclick="openAlbum('autobahn')"><div class="gc-cov" style="background:linear-gradient(160deg,#1a1a28,#0e0e1c)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:8px"><div style="width:52px;height:3px;background:rgba(200,200,255,.2);border-radius:1px"></div><div style="width:52px;height:1px;background:rgba(200,200,255,.3)"></div><div style="width:52px;height:3px;background:rgba(200,200,255,.2);border-radius:1px;margin-top:5px"></div><div style="font-size:5px;color:rgba(180,180,255,.4);font-family:'DM Mono';letter-spacing:2px;margin-top:5px">AUTOBAHN</div></div></div><div class="gc-aname">Autobahn</div><div class="gc-aartist">Kraftwerk</div></div>
+          <div class="gc-alb" onclick="openAlbum('autobahn')"><div class="gc-cov" style="background:linear-gradient(160deg,#14141e,#0a0a14)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:8px"><div style="width:46px;height:2px;background:rgba(180,180,255,.25);border-radius:1px"></div><div style="width:46px;height:2px;background:rgba(180,180,255,.15);border-radius:1px"></div><div style="font-size:5px;color:rgba(180,180,255,.3);font-family:'DM Mono';letter-spacing:1px;margin-top:4px;text-transform:uppercase">Trans-Europe</div></div></div><div class="gc-aname">Trans-Europe Exp.</div><div class="gc-aartist">Kraftwerk</div></div>
+          <div class="gc-alb" onclick="openAlbum('autobahn')"><div class="gc-cov" style="background:linear-gradient(160deg,#0a0a14,#060608)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px"><div style="width:13px;height:17px;background:linear-gradient(180deg,#c8c8d0,#888890);border-radius:3px 3px 2px 2px;opacity:.8"></div><div style="width:13px;height:17px;background:linear-gradient(180deg,#b8a060,#80702a);border-radius:3px 3px 2px 2px;opacity:.8"></div></div></div><div class="gc-aname">Discovery</div><div class="gc-aartist">Daft Punk</div></div>
+        </div>
+      </div>
+      <div class="gc">
+        <div class="gc-hdr" style="background:linear-gradient(160deg,#08030f,#120520)">
+          <div style="font-size:38px">&#127908;</div>
+          <div class="gc-name" style="color:#9966ee">Soul</div>
+          <div class="gc-cnt">4 records</div>
+        </div>
+        <div class="gc-strip">
+          <div class="gc-alb" onclick="openAlbum('sitkofl')"><div class="gc-cov" style="background:linear-gradient(160deg,#3a1a00,#281200)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px;padding:8px"><div style="width:8px;height:8px;background:#e84020;border-radius:1px"></div><div style="width:8px;height:8px;background:#e8a020;border-radius:1px"></div><div style="width:8px;height:8px;background:#40a840;border-radius:1px"></div><div style="width:8px;height:8px;background:#2040c8;border-radius:1px"></div><div style="width:8px;height:8px;background:#c820c8;border-radius:1px"></div><div style="width:8px;height:8px;background:#e84020;border-radius:1px"></div></div></div><div class="gc-aname">Songs in the Key of Life</div><div class="gc-aartist">Stevie Wonder</div></div>
+          <div class="gc-alb" onclick="openAlbum('kob')"><div class="gc-cov" style="background:linear-gradient(160deg,#1a0a18,#100810)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:rgba(255,180,100,.45);font-family:'DM Mono';text-transform:uppercase;text-align:center;line-height:2">WHAT'S<br>GOING ON</div></div><div class="gc-aname">What's Going On</div><div class="gc-aartist">Marvin Gaye</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- TEXT LIST -->
+    <div id="v-list" class="lv" style="display:none">
+      <div class="ah">A</div>
+      <div class="lrow" id="lr-1"><div class="lr-hdr" onclick="toggleRow('lr-1')"><span class="trn">1</span><div class="trm"><div class="tra">AC/DC</div><div class="trt">Back in Black</div><div class="trx">Atlantic &middot; 1980 &middot; SBLP 1</div></div><div class="trr"><div class="try">1980</div><span class="tt tt-r">Rock</span><br><span class="fmt-sm">LP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">Hells Bells</span><span class="track-dur">5:12</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Shoot to Thrill</span><span class="track-dur">5:17</span></div><div class="track-row"><span class="track-num">A3</span><span class="track-title">What Do You Do for Money Honey</span><span class="track-dur">3:35</span></div><div class="track-row"><span class="track-num">A4</span><span class="track-title">Given the Dog a Bone</span><span class="track-dur">3:31</span></div><div class="track-row"><span class="track-num">A5</span><span class="track-title">Let Me Put My Love into You</span><span class="track-dur">4:15</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">Back in Black</span><span class="track-dur">4:15</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">You Shook Me All Night Long</span><span class="track-dur">3:30</span></div><div class="track-row"><span class="track-num">B3</span><span class="track-title">Have a Drink on Me</span><span class="track-dur">3:58</span></div><div class="track-row"><span class="track-num">B4</span><span class="track-title">Shake a Leg</span><span class="track-dur">4:05</span></div><div class="track-row"><span class="track-num">B5</span><span class="track-title">Rock and Roll Ain't Noise Pollution</span><span class="track-dur">4:15</span></div></div></div>
+      <div class="ah">B</div>
+      <div class="lrow" id="lr-2"><div class="lr-hdr" onclick="toggleRow('lr-2')"><span class="trn">2</span><div class="trm"><div class="tra">David Bowie</div><div class="trt">Ziggy Stardust</div><div class="trx">RCA &middot; 1972 &middot; SF 8287</div><div class="tro"><i class="ti ti-tag"></i>Offer &middot; &#163;65</div></div><div class="trr"><div class="try">1972</div><span class="tt tt-r">Rock</span><br><span class="fmt-sm">LP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">Five Years</span><span class="track-dur">4:42</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Soul Love</span><span class="track-dur">3:33</span></div><div class="track-row"><span class="track-num">A3</span><span class="track-title">Moonage Daydream</span><span class="track-dur">4:40</span></div><div class="track-row"><span class="track-num">A4</span><span class="track-title">Starman</span><span class="track-dur">4:10</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">Lady Stardust</span><span class="track-dur">3:22</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">Ziggy Stardust</span><span class="track-dur">3:13</span></div><div class="track-row"><span class="track-num">B3</span><span class="track-title">Suffragette City</span><span class="track-dur">3:25</span></div><div class="track-row"><span class="track-num">B4</span><span class="track-title">Rock 'n' Roll Suicide</span><span class="track-dur">2:57</span></div></div></div>
+      <div class="ah">C</div>
+      <div class="lrow" id="lr-3"><div class="lr-hdr" onclick="toggleRow('lr-3')"><span class="trn">3</span><div class="trm"><div class="tra">John Coltrane</div><div class="trt">A Love Supreme</div><div class="trx">Impulse! &middot; 1965 &middot; A-77</div></div><div class="trr"><div class="try">1965</div><span class="tt tt-j">Jazz</span><br><span class="fmt-sm">LP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">Part 1: Acknowledgement</span><span class="track-dur">7:43</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Part 2: Resolution</span><span class="track-dur">7:23</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">Part 3: Pursuance</span><span class="track-dur">10:42</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">Part 4: Psalm</span><span class="track-dur">7:05</span></div></div></div>
+      <div class="ah">D</div>
+      <div class="lrow" id="lr-4"><div class="lr-hdr" onclick="toggleRow('lr-4')"><span class="trn">4</span><div class="trm"><div class="tra">Miles Davis</div><div class="trt">Kind of Blue</div><div class="trx">Columbia &middot; 1959 &middot; CL 1355</div></div><div class="trr"><div class="try">1959</div><span class="tt tt-j">Jazz</span><br><span class="fmt-sm">LP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">So What</span><span class="track-dur">9:22</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Freddie Freeloader</span><span class="track-dur">9:46</span></div><div class="track-row"><span class="track-num">A3</span><span class="track-title">Blue in Green</span><span class="track-dur">5:37</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">All Blues</span><span class="track-dur">11:33</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">Flamenco Sketches</span><span class="track-dur">9:26</span></div></div></div>
+      <div class="ah">F</div>
+      <div class="lrow" id="lr-5"><div class="lr-hdr" onclick="toggleRow('lr-5')"><span class="trn">5</span><div class="trm"><div class="tra">Fleetwood Mac</div><div class="trt">Rumours</div><div class="trx">Warner &middot; 1977 &middot; K 56344</div></div><div class="trr"><div class="try">1977</div><span class="tt tt-r">Rock</span><br><span class="fmt-sm">LP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">Second Hand News</span><span class="track-dur">2:43</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Dreams</span><span class="track-dur">4:14</span></div><div class="track-row"><span class="track-num">A3</span><span class="track-title">Never Going Back Again</span><span class="track-dur">2:14</span></div><div class="track-row"><span class="track-num">A4</span><span class="track-title">Don't Stop</span><span class="track-dur">3:11</span></div><div class="track-row"><span class="track-num">A5</span><span class="track-title">Go Your Own Way</span><span class="track-dur">3:38</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">The Chain</span><span class="track-dur">4:29</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">You Make Loving Fun</span><span class="track-dur">3:31</span></div><div class="track-row"><span class="track-num">B3</span><span class="track-title">Gold Dust Woman</span><span class="track-dur">4:51</span></div></div></div>
+      <div class="ah">K</div>
+      <div class="lrow" id="lr-6"><div class="lr-hdr" onclick="toggleRow('lr-6')"><span class="trn">6</span><div class="trm"><div class="tra">Kraftwerk</div><div class="trt">Autobahn</div><div class="trx">Philips &middot; 1974 &middot; 6305 231</div></div><div class="trr"><div class="try">1974</div><span class="tt tt-e">Electronic</span><br><span class="fmt-sm">LP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">Autobahn</span><span class="track-dur">22:43</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">Kometenmelodie 1</span><span class="track-dur">6:43</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">Kometenmelodie 2</span><span class="track-dur">8:25</span></div><div class="track-row"><span class="track-num">B3</span><span class="track-title">Mitternacht</span><span class="track-dur">4:24</span></div><div class="track-row"><span class="track-num">B4</span><span class="track-title">Morgenspaziergang</span><span class="track-dur">4:40</span></div></div></div>
+      <div class="ah">L</div>
+      <div class="lrow" id="lr-7"><div class="lr-hdr" onclick="toggleRow('lr-7')"><span class="trn">7</span><div class="trm"><div class="tra">Led Zeppelin</div><div class="trt">IV</div><div class="trx">Atlantic &middot; 1971 &middot; 2401 012</div></div><div class="trr"><div class="try">1971</div><span class="tt tt-r">Rock</span><br><span class="fmt-sm">LP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">Black Dog</span><span class="track-dur">4:54</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Rock and Roll</span><span class="track-dur">3:40</span></div><div class="track-row"><span class="track-num">A3</span><span class="track-title">The Battle of Evermore</span><span class="track-dur">5:51</span></div><div class="track-row"><span class="track-num">A4</span><span class="track-title">Stairway to Heaven</span><span class="track-dur">8:02</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">Misty Mountain Hop</span><span class="track-dur">4:38</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">Four Sticks</span><span class="track-dur">4:44</span></div><div class="track-row"><span class="track-num">B3</span><span class="track-title">Going to California</span><span class="track-dur">3:31</span></div><div class="track-row"><span class="track-num">B4</span><span class="track-title">When the Levee Breaks</span><span class="track-dur">7:07</span></div></div></div>
+      <div class="ah">P</div>
+      <div class="lrow" id="lr-8"><div class="lr-hdr" onclick="toggleRow('lr-8')"><span class="trn">8</span><div class="trm"><div class="tra">Pink Floyd</div><div class="trt">The Wall</div><div class="trx">Harvest &middot; 1979 &middot; SHDW 411</div></div><div class="trr"><div class="try">1979</div><span class="tt tt-r">Rock</span><br><span class="fmt-sm">2xLP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">In the Flesh?</span><span class="track-dur">3:20</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Another Brick in the Wall Pt. 2</span><span class="track-dur">3:59</span></div><div class="track-row"><span class="track-num">A3</span><span class="track-title">Mother</span><span class="track-dur">5:32</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">Comfortably Numb</span><span class="track-dur">6:23</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">Run Like Hell</span><span class="track-dur">4:22</span></div><div class="track-row"><span class="track-num">B3</span><span class="track-title">Outside the Wall</span><span class="track-dur">1:41</span></div></div></div>
+      <div class="ah">S</div>
+      <div class="lrow" id="lr-9"><div class="lr-hdr" onclick="toggleRow('lr-9')"><span class="trn">9</span><div class="trm"><div class="tra">Stevie Wonder</div><div class="trt">Songs in the Key of Life</div><div class="trx">Tamla &middot; 1976 &middot; T13-340C2</div><div class="tro"><i class="ti ti-tag"></i>Offer &middot; &#163;88</div></div><div class="trr"><div class="try">1976</div><span class="tt tt-s">Soul</span><br><span class="fmt-sm">2xLP &middot; 33rpm</span></div><i class="ti ti-chevron-down lr-chev"></i></div>
+      <div class="lr-tracks" style="display:none"><div class="track-side"><span class="side-lbl">Side A</span></div><div class="track-row"><span class="track-num">A1</span><span class="track-title">Love's in Need of Love Today</span><span class="track-dur">7:06</span></div><div class="track-row"><span class="track-num">A2</span><span class="track-title">Sir Duke</span><span class="track-dur">3:52</span></div><div class="track-row"><span class="track-num">A3</span><span class="track-title">I Wish</span><span class="track-dur">4:11</span></div><div class="track-side"><span class="side-lbl">Side B</span></div><div class="track-row"><span class="track-num">B1</span><span class="track-title">Isn't She Lovely</span><span class="track-dur">6:34</span></div><div class="track-row"><span class="track-num">B2</span><span class="track-title">As</span><span class="track-dur">7:08</span></div><div class="track-row"><span class="track-num">B3</span><span class="track-title">Another Star</span><span class="track-dur">8:28</span></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div id="s-det" class="scr">
+  <div class="dh2">
+    <button class="back" onclick="go('col','tab-col')"><i class="ti ti-chevron-left"></i>Collection</button>
+    <button class="ib" aria-label="Edit record"><i class="ti ti-edit"></i></button>
+  </div>
+  <div class="scroll">
+    <div class="dhero">
+      <div class="dico" id="det-emoji" style="background:linear-gradient(135deg,#140505,#280a0a)">&#127928;</div>
+      <div>
+        <div class="da" id="det-artist">Led Zeppelin</div>
+        <div class="dt" id="det-title">IV</div>
+        <span class="tt tt-r" id="det-genre-badge">Rock</span>
+      </div>
+    </div>
+    <div class="vrow"><i class="ti ti-check" style="font-size:15px;color:var(--green)"></i><div style="font-size:14px;color:var(--gdim)">Verified on Discogs</div><div id="det-cat" style="margin-left:auto;font-family:'DM Mono';font-size:12px;color:var(--gdim)">2401 012</div></div>
+    <div class="slb">Record details</div>
+    <div class="dc2">
+      <div class="dr"><span class="dl">Label</span><span class="dv" id="det-label">Atlantic</span></div>
+      <div class="dr"><span class="dl">Year</span><span class="dv" id="det-year">1971</span></div>
+      <div class="dr"><span class="dl">Country</span><span class="dv" id="det-country">UK</span></div>
+      <div class="dr"><span class="dl">Format</span><span class="dv" id="det-format">LP, Album</span></div>
+      <div class="dr"><span class="dl">Speed</span><span class="dv" id="det-speed">33&#8531; rpm</span></div>
+      <div class="dr"><span class="dl">Sides</span><span class="dv" id="det-sides">2</span></div>
+      <div class="dr"><span class="dl">Condition</span><span class="dv" id="det-condition">VG+</span></div>
+      <div class="dr"><span class="dl">Pressing</span><span class="dv" id="det-pressing">1st UK</span></div>
+    </div>
+    <div class="slb">Market value</div>
+    <div class="dc2">
+      <div class="dr"><span class="dl">Low</span><span class="dv" id="det-low" style="color:var(--green)">&#163;28</span></div>
+      <div class="dr"><span class="dl">Median</span><span class="dv" id="det-median" style="color:#bbbb44">&#163;75</span></div>
+      <div class="dr"><span class="dl">High</span><span class="dv" id="det-high" style="color:var(--pink)">&#163;240</span></div>
+    </div>
+    <div class="dc2" style="padding:0;margin:0 16px 12px">
+      <div class="track-hdr" id="track-toggle" onclick="toggleTracks()" role="button" aria-expanded="false" aria-label="Show track listing">
+        <span id="det-track-summary" style="font-size:15px;color:var(--w);font-weight:500">Led Zeppelin IV</span>
+        <i class="ti ti-chevron-down" id="det-track-chevron" style="font-size:18px;color:var(--mu);transition:transform .25s"></i>
+      </div>
+      <div id="det-track-list" style="display:none">
+        <div class="track-side"><span class="side-lbl">Side A</span></div>
+        <div class="track-row"><span class="track-num">A1</span><span class="track-title">Black Dog</span><span class="track-dur">4:54</span></div>
+        <div class="track-row"><span class="track-num">A2</span><span class="track-title">Rock and Roll</span><span class="track-dur">3:40</span></div>
+        <div class="track-row"><span class="track-num">A3</span><span class="track-title">The Battle of Evermore</span><span class="track-dur">5:51</span></div>
+        <div class="track-row"><span class="track-num">A4</span><span class="track-title">Stairway to Heaven</span><span class="track-dur">8:02</span></div>
+        <div class="track-side"><span class="side-lbl">Side B</span></div>
+        <div class="track-row"><span class="track-num">B1</span><span class="track-title">Misty Mountain Hop</span><span class="track-dur">4:38</span></div>
+        <div class="track-row"><span class="track-num">B2</span><span class="track-title">Four Sticks</span><span class="track-dur">4:44</span></div>
+        <div class="track-row"><span class="track-num">B3</span><span class="track-title">Going to California</span><span class="track-dur">3:31</span></div>
+        <div class="track-row"><span class="track-num">B4</span><span class="track-title">When the Levee Breaks</span><span class="track-dur">7:07</span></div>
+      </div>
+    </div>
+    <div class="tog-row">
+      <div><div style="font-size:16px;color:var(--w);font-weight:500">Accept offers</div><div style="font-size:12px;color:#555;margin-top:3px">Let others make you an offer</div></div>
+      <div class="tog" onclick="this.classList.toggle('off')"><div class="tg2"></div></div>
+    </div>
+    <div class="oa">
+      <div class="oat"><i class="ti ti-tag" style="font-size:15px"></i>1 pending offer</div>
+      <div class="oas2">@vinylhunter_uk offered &#163;65 &middot; 2 days ago</div>
+      <button class="bpink" onclick="go('mkt','tab-mkt')">View offer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD -->
+<div id="s-add" class="scr">
+  <div class="hdr"><div class="ht">Add record</div></div>
+  <div class="scroll">
+    <div class="mg">
+      <div class="mc"><div class="mi"><i class="ti ti-camera"></i></div><div class="mtl">Photograph label</div><div class="mds">Point camera at label. AI identifies instantly.</div></div>
+      <div class="mc"><div class="mi"><i class="ti ti-search"></i></div><div class="mtl">Search Discogs</div><div class="mds">Search 9 million releases directly.</div></div>
+    </div>
+    <div class="mc" onclick="showShazamAdd()" style="margin:0 16px 14px;display:flex;flex-direction:row;align-items:center;gap:16px;padding:18px;text-align:left;background:var(--pbg);border-color:var(--pdim)">
+      <div class="mi" style="margin:0;flex-shrink:0"><i class="ti ti-ear" style="color:var(--pink)"></i></div>
+      <div><div class="mtl" style="color:var(--pink)">Shazam to Add</div><div class="mds">Hold near music playing &mdash; identifies it, finds the vinyl, adds to collection or want list.</div></div>
+    </div>
+    <div id="shazam-add-panel" style="display:none;margin:0 16px 14px;border-radius:16px;overflow:hidden;border:.5px solid var(--pdim);background:var(--pbg);padding:18px;text-align:center">
+      <div id="sa-idle" style="display:none">
+        <button onclick="startShazamAdd()" style="background:var(--pink);border:none;border-radius:50px;padding:15px 0;font-family:'Inter';font-size:17px;font-weight:700;color:#fff;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;-webkit-tap-highlight-color:transparent"><i class="ti ti-ear" style="font-size:20px"></i>Tap to listen</button>
+        <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:10px;font-family:'DM Mono'">Identifies what's playing &rarr; finds vinyl pressing</div>
+      </div>
+      <div id="sa-listening" style="display:none">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--pink);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;animation:shazPulse 1.2s ease-in-out infinite"><i class="ti ti-ear" style="font-size:30px;color:#fff"></i></div>
+        <div style="font-size:17px;font-weight:600;color:var(--w);margin-bottom:6px">Listening&hellip;</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);font-family:'DM Mono';margin-bottom:14px">Hold near the music</div>
+        <button onclick="resetShazamAdd()" style="background:transparent;border:.5px solid rgba(255,255,255,.15);border-radius:20px;padding:7px 18px;font-size:13px;color:rgba(255,255,255,.4);cursor:pointer;font-family:'Inter'">Cancel</button>
+      </div>
+      <div id="sa-match" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;text-align:left;margin-bottom:14px">
+          <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0e0308,#1a0514);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">&#127928;</div>
+          <div>
+            <div style="font-size:12px;color:var(--pink);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Match found</div>
+            <div style="font-size:18px;font-weight:700;color:var(--w);line-height:1.1">Whole Lotta Love</div>
+            <div style="font-size:13px;color:var(--mu);margin-top:2px">Led Zeppelin &middot; 1969</div>
+          </div>
+        </div>
+        <div style="background:var(--gbg);border:.5px solid var(--gdim);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+          <i class="ti ti-disc" style="font-size:15px;color:var(--green)"></i>
+          <div style="font-size:13px;color:var(--green)">14 vinyl pressings on Discogs &middot; From &#163;18</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:.5px solid var(--bd2);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+          <i class="ti ti-x" style="font-size:15px;color:var(--mu)"></i>
+          <div style="font-size:13px;color:var(--mu)">Not in your collection</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="shazamAddToCollection()" style="flex:1;background:var(--green);border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;color:#000;cursor:pointer;font-family:'Inter';display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-plus" style="font-size:16px"></i>Add to collection</button>
+          <button onclick="shazamAddToWant()" style="flex:1;background:transparent;border:.5px solid var(--pdim);border-radius:12px;padding:13px;font-size:15px;font-weight:600;color:var(--pink);cursor:pointer;font-family:'Inter'">Want list</button>
+        </div>
+        <button onclick="resetShazamAdd()" style="margin-top:10px;background:transparent;border:none;font-size:13px;color:rgba(255,255,255,.3);cursor:pointer;font-family:'Inter'">Cancel</button>
+      </div>
+      <div id="sa-done" style="display:none">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--gbg);border:2px solid var(--green);margin:0 auto 12px;display:flex;align-items:center;justify-content:center"><i class="ti ti-check" style="font-size:24px;color:var(--green)"></i></div>
+        <div id="sa-done-msg" style="font-size:16px;font-weight:600;color:var(--w);margin-bottom:4px">Added to collection</div>
+        <div style="font-size:13px;color:var(--mu);margin-bottom:14px">Whole Lotta Love &middot; Led Zeppelin</div>
+        <button onclick="resetShazamAdd()" style="background:transparent;border:.5px solid rgba(255,255,255,.15);border-radius:20px;padding:8px 20px;font-size:14px;color:rgba(255,255,255,.5);cursor:pointer;font-family:'Inter'"><i class="ti ti-ear" style="font-size:14px;vertical-align:-2px;margin-right:5px"></i>Listen again</button>
+      </div>
+    </div>
+    <div class="cam"><i class="ti ti-camera" style="font-size:32px;color:#222"></i><div style="font-size:14px;color:#333;margin-top:6px">Tap to open camera</div></div>
+    <div class="mb2"><i class="ti ti-check" style="font-size:20px;color:var(--green)"></i><div><div style="font-size:16px;color:var(--w);font-weight:600">Pink Floyd &mdash; The Wall</div><div style="font-size:12px;color:var(--gdim);margin-top:3px">1979 &middot; Harvest &middot; SHDW 411 &middot; 2xLP &middot; UK 1st</div></div></div>
+    <div class="slb" style="margin-top:4px">Confirm details</div>
+    <div class="ig"><div class="il">Artist</div><input class="inp" type="text" value="Pink Floyd"></div>
+    <div class="ig"><div class="il">Title</div><input class="inp" type="text" value="The Wall"></div>
+    <div class="tc"><div><div class="il">Year</div><input class="inp" type="text" value="1979"></div><div><div class="il">Condition</div><select class="sel"><option>M</option><option>NM</option><option selected>VG+</option><option>VG</option><option>G+</option></select></div></div>
+    <div class="ig"><div class="il">Genre</div><select class="sel"><option selected>Rock</option><option>Jazz</option><option>Soul / R&amp;B</option><option>Electronic</option><option>Classical</option><option>Folk</option><option>Blues</option></select></div>
+    <div style="padding:8px 16px 20px"><button class="bgreen" onclick="go('col','tab-col')">Add to collection</button></div>
+  </div>
+</div>
+
+<!-- NEAR YOU -->
+<div id="s-ev" class="scr">
+  <div class="hdr"><div><div class="ht">Near You</div><div class="hs">14 matches this month</div></div><button class="ib" aria-label="Calendar view"><i class="ti ti-calendar"></i></button></div>
+  <div class="ef"><span class="ep on" onclick="sef(this)">All</span><span class="ep" onclick="sef(this)">This week</span><span class="ep" onclick="sef(this)">Rock</span><span class="ep" onclick="sef(this)">Jazz</span><span class="ep" onclick="sef(this)">Soul</span><span class="ep" onclick="sef(this)">Electronic</span></div>
+  <div class="scroll">
+    <div class="lbar"><div class="ldot"></div><div class="ltxt">Wellingborough &middot; 25 mi</div><div class="lcnt">14 matches</div></div>
+    <div class="mc3"><div class="mgg"></div><div class="mgp2"></div><div class="mgrd"></div><div class="myo"></div><div class="mr" style="width:56px;height:56px"></div><div class="mr" style="width:112px;height:112px"></div><div class="mpin" style="left:28%;top:25%"><div class="mpd" style="background:var(--green)"></div><div class="mpl" style="color:var(--green)">Roadmender</div></div><div class="mpin" style="left:64%;top:19%"><div class="mpd" style="background:var(--green)"></div><div class="mpl" style="color:var(--green)">Derngate</div></div><div class="mpin" style="left:57%;top:66%"><div class="mpd" style="background:#887040"></div><div class="mpl" style="color:#887040">Kettering Fest.</div></div><div class="mpin" style="left:18%;top:60%"><div class="mpd" style="background:var(--pdim)"></div><div class="mpl" style="color:var(--pdim)">Bedford Corn Ex.</div></div><div class="mft">Wellingborough &middot; 25 mi</div><div class="mex"><i class="ti ti-maximize" style="font-size:9px"></i>Expand</div></div>
+    <div class="esl">Coming up locally</div>
+    <div class="er"><div class="ed"><div class="eday">14</div><div class="emon">Jun</div></div><div class="eb"><div class="eart">Colosseum</div><div class="even">Roadmender, Northampton &middot; 8 mi</div><div class="etags"><span class="et et-m"><i class="ti ti-disc" style="font-size:9px;margin-right:2px"></i>Colosseum LP owned</span><span class="et et-g">Jazz-Rock</span></div></div><div class="er2"><div class="eprc">&#163;22</div><div class="edst">8 mi</div><i class="ti ti-heart ehrt"></i></div></div>
+    <div class="er"><div class="ed"><div class="eday">19</div><div class="emon">Jun</div></div><div class="eb"><div class="eart">The Miles Davis Project</div><div class="even">Derngate, Northampton &middot; 9 mi</div><div class="etags"><span class="et et-m"><i class="ti ti-disc" style="font-size:9px;margin-right:2px"></i>Kind of Blue owned</span><span class="et et-g">Jazz</span><span class="et et-e">1960s</span></div></div><div class="er2"><div class="eprc">&#163;18</div><div class="edst">9 mi</div><i class="ti ti-heart ehrt sv"></i></div></div>
+    <div class="er"><div class="ed"><div class="eday">28</div><div class="emon">Jun</div></div><div class="eb"><div class="eart">Stevie Wonder Experience</div><div class="even">Bedford Corn Exchange &middot; 14 mi</div><div class="etags"><span class="et et-m"><i class="ti ti-disc" style="font-size:9px;margin-right:2px"></i>Songs in the Key&hellip; owned</span><span class="et et-g">Soul</span></div></div><div class="er2"><div class="eprc">&#163;24</div><div class="edst">14 mi</div><i class="ti ti-heart ehrt"></i></div></div>
+    <div class="esl" style="margin-top:8px">Bigger shows &middot; UK</div>
+    <div class="nc"><div class="nt"><div class="ntg"></div><div><div class="nb">Fri 20 Jun</div><div class="nart">Bowie Symphonic</div><div class="nven">O2 Academy Brixton &middot; 68 mi</div></div><div class="nprc">From &#163;28</div></div><div class="nbd"><div class="nm"><i class="ti ti-check" style="font-size:14px;color:var(--green)"></i><div class="nmt">Ziggy Stardust &middot; Aladdin Sane &middot; Heroes</div></div><div class="ntags"><span class="et et-m">3 records match</span><span class="et et-g">Rock</span></div><div class="nact"><button class="btix"><i class="ti ti-ticket" style="font-size:15px"></i>Get tickets</button><button class="bsav"><i class="ti ti-heart"></i></button></div></div></div>
+    <div class="nc"><div class="nt"><div class="ntg"></div><div><div class="nb">Sat 5 Jul</div><div class="nart">Pink Floyd Experience</div><div class="nven">Royal Albert Hall &middot; 72 mi</div></div><div class="nprc">From &#163;45</div></div><div class="nbd"><div class="nm"><i class="ti ti-check" style="font-size:14px;color:var(--green)"></i><div class="nmt">The Wall &middot; Dark Side of the Moon</div></div><div class="ntags"><span class="et et-m">2 records match</span><span class="et et-g">Rock</span></div><div class="nact"><button class="btix"><i class="ti ti-ticket" style="font-size:15px"></i>Get tickets</button><button class="bsav"><i class="ti ti-heart"></i></button></div></div></div>
+    <div class="nc"><div class="nt"><div class="ntg"></div><div><div class="nb" style="background:var(--pink)">Sun 13 Jul</div><div class="nart">Kraftwerk</div><div class="nven">Tate Modern, London &middot; 72 mi</div></div><div class="nprc">From &#163;65</div></div><div class="nbd"><div class="nm"><i class="ti ti-check" style="font-size:14px;color:var(--green)"></i><div class="nmt">Autobahn &middot; Trans-Europe Express</div></div><div class="ntags"><span class="et et-m">2 records match</span><span class="et et-g">Electronic</span></div><div class="nact"><button class="btix"><i class="ti ti-ticket" style="font-size:15px"></i>Get tickets</button><button class="bsav"><i class="ti ti-heart"></i></button></div></div></div>
+    <div style="margin:8px 16px 20px;padding:10px 14px;border-radius:10px;border:.5px solid var(--bd2);display:flex;align-items:center;gap:10px"><i class="ti ti-ticket" style="font-size:15px;color:#444"></i><div style="font-size:12px;color:#444;font-family:'DM Mono'">Tickets via Ticketmaster &middot; My Vinyl Live earns a small commission</div></div>
+  </div>
+</div>
+
+<!-- OFFERS -->
+<div id="s-mkt" class="scr">
+  <div class="hdr"><div><div class="ht">Offers</div><div class="hs">3 pending</div></div><button class="ib" aria-label="Filter"><i class="ti ti-filter"></i></button></div>
+  <div class="scroll">
+    <div class="sr"><div class="sc"><div class="sv2" style="color:var(--green)">3</div><div class="sl2">Pending</div></div><div class="sc"><div class="sv2">12</div><div class="sl2">Received</div></div><div class="sc"><div class="sv2" style="color:var(--green)">&#163;340</div><div class="sl2">Sold</div></div></div>
+    <div class="slb">Pending offers</div>
+    <div class="oc"><div class="oh"><div class="ou"><div class="av">VH</div><div><div class="on2">@vinylhunter_uk</div><div class="ol2">Manchester &middot; &#9733; 4.9</div></div></div><div class="oa2">&#163;65</div></div><div class="ore"><div class="ort">Led Zeppelin IV</div><div class="ors">Median: &#163;75</div></div><div class="ono">"Happy to collect in person or pay shipping."</div><div class="oac"><button class="bacc">Accept &#163;65</button><button class="bdec">Decline</button><div class="bmsg"><i class="ti ti-message" style="font-size:17px"></i></div></div></div>
+    <div class="oc"><div class="oh"><div class="ou"><div class="av" style="background:var(--pbg);border-color:var(--pdim);color:var(--pink)">RP</div><div><div class="on2">@recordpicker</div><div class="ol2">London &middot; &#9733; 4.7</div></div></div><div class="oa2">&#163;88</div></div><div class="ore"><div class="ort">Songs in the Key of Life</div><div class="ors">Median: &#163;95</div></div><div class="ono">"Looking for a clean original pressing."</div><div class="oac"><button class="bacc">Accept &#163;88</button><button class="bdec">Decline</button><div class="bmsg"><i class="ti ti-message" style="font-size:17px"></i></div></div></div>
+  </div>
+</div>
+
+<!-- GIGS -->
+<div id="s-gig" class="scr">
+  <div class="hdr"><div><div class="ht">Gig Records</div><div class="hs">14 gigs logged</div></div><button class="ib" onclick="showAddGig()" aria-label="Add gig"><i class="ti ti-plus"></i></button></div>
+  <div class="scroll">
+    <div id="add-gig-panel" style="display:none;margin:0 16px 14px;background:var(--sf);border:.5px solid var(--bd2);border-radius:16px;padding:18px">
+      <div style="font-size:17px;font-weight:700;color:var(--w);margin-bottom:14px">Log a gig</div>
+      <div class="ig"><div class="il">Artist / Band</div><input class="inp" type="text" placeholder="e.g. Radiohead"></div>
+      <div class="ig"><div class="il">Venue</div><input class="inp" type="text" placeholder="e.g. O2 Arena, London"></div>
+      <div class="tc"><div><div class="il">Date</div><input class="inp" type="date"></div><div><div class="il">Time</div><input class="inp" type="time" value="19:30"></div></div>
+      <div class="ig"><div class="il">Who were you with?</div><input class="inp" type="text" placeholder="e.g. Sarah, Mike, Jo"></div>
+      <div class="ig"><div class="il">Setlist (one per line)</div><textarea class="inp" rows="5" placeholder="1. Creep&#10;2. Karma Police" style="resize:none;font-family:'DM Mono';font-size:13px;line-height:1.6"></textarea></div>
+      <div class="ig"><div class="il">Notes / memories</div><textarea class="inp" rows="3" placeholder="Front row, incredible atmosphere..." style="resize:none;line-height:1.6"></textarea></div>
+      <div style="display:flex;gap:8px;margin-top:4px"><button class="bgreen" style="flex:1;padding:13px" onclick="hideAddGig()">Save gig record</button><button onclick="hideAddGig()" style="width:46px;background:transparent;border:.5px solid var(--bd2);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#777;font-size:18px"><i class="ti ti-x"></i></button></div>
+    </div>
+    <div class="gig-card" id="gc-1" onclick="toggleGig('gc-1')">
+      <div class="gig-hdr"><div class="gig-date"><div style="font-size:20px;font-weight:700;color:var(--w);line-height:1">14</div><div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono';margin-top:2px">Mar</div><div style="font-size:9px;color:#555;font-family:'DM Mono'">2024</div></div><div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:var(--w)">David Bowie Tribute</div><div style="font-size:13px;color:var(--mu);margin-top:2px">O2 Academy Brixton &middot; London</div><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><span style="font-size:11px;color:var(--gdim);background:var(--gbg);border:.5px solid var(--gdim);border-radius:5px;padding:2px 8px;font-family:'DM Mono'">12 tracks</span><span style="font-size:11px;color:var(--mu);display:flex;align-items:center;gap:4px"><i class="ti ti-users" style="font-size:12px"></i>Sarah, Mike</span></div></div><i class="ti ti-chevron-down" style="font-size:18px;color:var(--mu);flex-shrink:0;transition:transform .25s" id="gc-1-chev"></i></div>
+      <div class="gig-body" style="display:none"><div class="gig-slbl">Setlist</div><div class="gig-setlist"><div class="gig-track"><span class="gig-tnum">1</span><span class="gig-ttitle">Ziggy Stardust</span></div><div class="gig-track"><span class="gig-tnum">2</span><span class="gig-ttitle">Starman</span></div><div class="gig-track"><span class="gig-tnum">3</span><span class="gig-ttitle">Life on Mars?</span></div><div class="gig-track"><span class="gig-tnum">4</span><span class="gig-ttitle">Heroes</span></div><div class="gig-track"><span class="gig-tnum">5</span><span class="gig-ttitle">Let's Dance</span></div><div class="gig-track"><span class="gig-tnum">6</span><span class="gig-ttitle">Space Oddity</span></div><div class="gig-track"><span class="gig-tnum">7</span><span class="gig-ttitle">Rebel Rebel</span></div><div class="gig-track"><span class="gig-tnum">8</span><span class="gig-ttitle">Rock 'n' Roll Suicide</span></div></div><div class="gig-slbl" style="margin-top:10px">With</div><div style="padding:0 16px 10px;display:flex;gap:8px;flex-wrap:wrap"><span class="gig-ftag">Sarah</span><span class="gig-ftag">Mike</span></div><div class="gig-slbl">Notes</div><div style="font-size:14px;color:var(--mu);padding:0 16px 14px;line-height:1.6">"Front row. Mike cried during Heroes. The encore was devastating."</div><div style="padding:0 16px 14px"><div style="font-size:10px;color:#555;font-family:'DM Mono';margin-bottom:8px">Records in your collection</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:11px;color:var(--green);background:var(--gbg);border:.5px solid var(--gdim);border-radius:6px;padding:3px 10px;font-family:'DM Mono'">&#127928; Ziggy Stardust</span><span style="font-size:11px;color:var(--green);background:var(--gbg);border:.5px solid var(--gdim);border-radius:6px;padding:3px 10px;font-family:'DM Mono'">&#127928; Aladdin Sane</span></div></div></div>
+    </div>
+    <div class="gig-card" id="gc-2" onclick="toggleGig('gc-2')">
+      <div class="gig-hdr"><div class="gig-date"><div style="font-size:20px;font-weight:700;color:var(--w);line-height:1">22</div><div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono';margin-top:2px">Jun</div><div style="font-size:9px;color:#555;font-family:'DM Mono'">2023</div></div><div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:var(--w)">Miles Davis Experience</div><div style="font-size:13px;color:var(--mu);margin-top:2px">Ronnie Scott's &middot; London</div><div style="display:flex;gap:8px;margin-top:6px"><span style="font-size:11px;color:var(--gdim);background:var(--gbg);border:.5px solid var(--gdim);border-radius:5px;padding:2px 8px;font-family:'DM Mono'">8 tracks</span><span style="font-size:11px;color:var(--mu);display:flex;align-items:center;gap:4px"><i class="ti ti-users" style="font-size:12px"></i>Jo, Tom, Claire</span></div></div><i class="ti ti-chevron-down" style="font-size:18px;color:var(--mu);flex-shrink:0;transition:transform .25s" id="gc-2-chev"></i></div>
+      <div class="gig-body" style="display:none"><div class="gig-slbl">Setlist</div><div class="gig-setlist"><div class="gig-track"><span class="gig-tnum">1</span><span class="gig-ttitle">So What</span></div><div class="gig-track"><span class="gig-tnum">2</span><span class="gig-ttitle">All Blues</span></div><div class="gig-track"><span class="gig-tnum">3</span><span class="gig-ttitle">Freddie Freeloader</span></div><div class="gig-track"><span class="gig-tnum">4</span><span class="gig-ttitle">Blue in Green</span></div><div class="gig-track"><span class="gig-tnum">5</span><span class="gig-ttitle">Kind of Blue (medley)</span></div></div><div class="gig-slbl" style="margin-top:10px">With</div><div style="padding:0 16px 10px;display:flex;gap:8px;flex-wrap:wrap"><span class="gig-ftag">Jo</span><span class="gig-ftag">Tom</span><span class="gig-ftag">Claire</span></div><div class="gig-slbl">Notes</div><div style="font-size:14px;color:var(--mu);padding:0 16px 14px;line-height:1.6">"Tiny venue, unbelievably intimate. Six feet from the stage."</div><div style="padding:0 16px 14px"><div style="font-size:10px;color:#555;font-family:'DM Mono';margin-bottom:8px">Records in your collection</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:11px;color:var(--green);background:var(--gbg);border:.5px solid var(--gdim);border-radius:6px;padding:3px 10px;font-family:'DM Mono'">&#127927; Kind of Blue</span></div></div></div>
+    </div>
+    <div class="gig-card" id="gc-3" onclick="toggleGig('gc-3')">
+      <div class="gig-hdr"><div class="gig-date"><div style="font-size:20px;font-weight:700;color:var(--w);line-height:1">8</div><div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono';margin-top:2px">Sep</div><div style="font-size:9px;color:#555;font-family:'DM Mono'">2022</div></div><div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:var(--w)">Kraftwerk</div><div style="font-size:13px;color:var(--mu);margin-top:2px">Tate Modern &middot; London</div><div style="display:flex;gap:8px;margin-top:6px"><span style="font-size:11px;color:var(--gdim);background:var(--gbg);border:.5px solid var(--gdim);border-radius:5px;padding:2px 8px;font-family:'DM Mono'">11 tracks</span><span style="font-size:11px;color:var(--mu);display:flex;align-items:center;gap:4px"><i class="ti ti-user" style="font-size:12px"></i>Solo</span></div></div><i class="ti ti-chevron-down" style="font-size:18px;color:var(--mu);flex-shrink:0;transition:transform .25s" id="gc-3-chev"></i></div>
+      <div class="gig-body" style="display:none"><div class="gig-slbl">Setlist</div><div class="gig-setlist"><div class="gig-track"><span class="gig-tnum">1</span><span class="gig-ttitle">The Robots</span></div><div class="gig-track"><span class="gig-tnum">2</span><span class="gig-ttitle">Computer Love</span></div><div class="gig-track"><span class="gig-tnum">3</span><span class="gig-ttitle">Autobahn</span></div><div class="gig-track"><span class="gig-tnum">4</span><span class="gig-ttitle">Trans-Europe Express</span></div><div class="gig-track"><span class="gig-tnum">5</span><span class="gig-ttitle">The Model</span></div><div class="gig-track"><span class="gig-tnum">6</span><span class="gig-ttitle">Musique Non Stop</span></div></div><div class="gig-slbl" style="margin-top:10px">Notes</div><div style="font-size:14px;color:var(--mu);padding:0 16px 14px;line-height:1.6">"3D show, Turbine Hall. Autobahn felt like it lasted forever in the best possible way."</div><div style="padding:0 16px 14px"><div style="font-size:10px;color:#555;font-family:'DM Mono';margin-bottom:8px">Records in your collection</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:11px;color:var(--green);background:var(--gbg);border:.5px solid var(--gdim);border-radius:6px;padding:3px 10px;font-family:'DM Mono'">&#127929; Autobahn</span><span style="font-size:11px;color:var(--green);background:var(--gbg);border:.5px solid var(--gdim);border-radius:6px;padding:3px 10px;font-family:'DM Mono'">&#127929; Trans-Europe Exp.</span></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WANT LIST -->
+<div id="s-want" class="scr">
+  <div class="hdr"><div><div class="ht">Want List</div><div class="hs">12 records wanted</div></div><button class="ib" aria-label="Filter want list"><i class="ti ti-filter"></i></button></div>
+  <div class="scroll">
+    <div style="margin:0 16px 14px;border-radius:16px;border:.5px solid var(--bd2);background:var(--sf);padding:16px;display:flex;align-items:center;gap:14px">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--pbg);border:.5px solid var(--pdim);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-ear" style="font-size:22px;color:var(--pink)"></i></div>
+      <div style="flex:1"><div style="font-size:15px;font-weight:600;color:var(--w);margin-bottom:2px">Shazam to Want List</div><div style="font-size:12px;color:var(--mu)">Hear something you want? Use the Add tab to identify it and add to your want list.</div></div>
+      <button onclick="go('add','tab-add')" style="background:var(--pink);border:none;border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;font-family:'Inter';flex-shrink:0;white-space:nowrap"><i class="ti ti-ear" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>Listen</button>
+    </div>
+    <div style="font-family:'DM Mono';font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1.5px;margin:0 16px 12px">Wanted records</div>
+    <div class="wrow" id="wr-1"><div class="wr-main" onclick="toggleWant('wr-1')"><div style="width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,#140505,#280a0a);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#127928;</div><div class="trm"><div class="tra">Led Zeppelin</div><div class="trt">II</div><div class="trx">Atlantic &middot; 1969</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:'DM Mono';font-size:11px;color:#777">1969</div><span class="tt tt-r" style="display:block;margin-top:3px">Rock</span><div class="wr-owners">2 own it</div></div><i class="ti ti-chevron-down wr-chev"></i></div><div class="wr-detail" style="display:none"><div class="wr-orow"><div class="av" style="width:32px;height:32px;font-size:11px">VH</div><div><div style="font-size:14px;color:var(--w);font-weight:500">@vinylhunter_uk</div><div style="font-size:12px;color:#777">Manchester &middot; &#9733; 4.9 &middot; Willing to sell</div></div><div class="wr-msg"><i class="ti ti-message" style="font-size:16px"></i></div></div><div style="padding:12px 16px 14px;border-top:.5px solid var(--bd)"><div style="font-size:12px;color:#777;font-family:'DM Mono';margin-bottom:8px">Discogs median: <span style="color:var(--w)">&#163;45</span> &middot; 14 for sale</div><button style="background:var(--green);border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;color:#000;cursor:pointer;font-family:'Inter';width:100%">View on Discogs</button></div></div></div>
+    <div class="wrow" id="wr-2"><div class="wr-main" onclick="toggleWant('wr-2')"><div style="width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,#07030e,#0f0520);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#127929;</div><div class="trm"><div class="tra">Aphex Twin</div><div class="trt">Selected Ambient Works Vol. II</div><div class="trx">Warp &middot; 1994</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:'DM Mono';font-size:11px;color:#777">1994</div><span class="tt tt-e" style="display:block;margin-top:3px">Electronic</span><div class="wr-owners">1 owns it</div></div><i class="ti ti-chevron-down wr-chev"></i></div><div class="wr-detail" style="display:none"><div class="wr-orow"><div class="av" style="width:32px;height:32px;font-size:11px">RP</div><div><div style="font-size:14px;color:var(--w);font-weight:500">@recordpicker</div><div style="font-size:12px;color:#777">London &middot; &#9733; 4.7 &middot; Willing to sell</div></div><div class="wr-msg"><i class="ti ti-message" style="font-size:16px"></i></div></div><div style="padding:12px 16px 14px;border-top:.5px solid var(--bd)"><div style="font-size:12px;color:#777;font-family:'DM Mono';margin-bottom:8px">Discogs median: <span style="color:var(--w)">&#163;180</span> &middot; 22 for sale</div><button style="background:var(--green);border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;color:#000;cursor:pointer;font-family:'Inter';width:100%">View on Discogs</button></div></div></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="s-pro" class="scr">
+  <div class="hdr"><div class="ht">Profile</div><button class="ib" aria-label="Settings"><i class="ti ti-settings"></i></button></div>
+  <div class="scroll">
+    <div class="ph2"><div class="pav">RT</div><div class="pn">Richard T.</div><div class="phandle">@richardvinyls</div><div class="pj">Member since March 2025</div><div class="pstats"><div class="pst"><div class="psv">47</div><div class="psl">Records</div></div><div class="pst"><div class="psv" style="color:var(--green)">&#163;925</div><div class="psl">Est. Value</div></div><div class="pst"><div class="psv" style="color:var(--green)">&#9733;4.9</div><div class="psl">Rating</div></div></div></div>
+    <div style="margin:0 16px 14px;background:var(--gbg);border:.5px solid var(--gdim);border-radius:14px;padding:16px 18px">
+      <div style="font-size:12px;color:var(--gdim);font-family:'DM Mono';text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Collection value breakdown</div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:.5px solid rgba(29,245,170,.1)"><span style="font-size:14px;color:var(--mu)">Rock (28 records)</span><span style="font-family:'DM Mono';font-size:14px;color:var(--w)">&#163;450</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:.5px solid rgba(29,245,170,.1)"><span style="font-size:14px;color:var(--mu)">Jazz (9 records)</span><span style="font-family:'DM Mono';font-size:14px;color:var(--w)">&#163;380</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:.5px solid rgba(29,245,170,.1)"><span style="font-size:14px;color:var(--mu)">Electronic (6 records)</span><span style="font-family:'DM Mono';font-size:14px;color:var(--w)">&#163;85</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0"><span style="font-size:14px;color:var(--mu)">Soul (4 records)</span><span style="font-family:'DM Mono';font-size:14px;color:var(--w)">&#163;60</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0 0;border-top:.5px solid rgba(29,245,170,.2);margin-top:4px"><span style="font-size:15px;font-weight:600;color:var(--w)">Total</span><span style="font-family:'DM Mono';font-size:17px;font-weight:700;color:var(--green)">&#163;925</span></div>
+    </div>
+    <div class="slb">Collection privacy</div>
+    <div class="pc"><div class="pr"><div><div class="prl">Public catalogue</div><div class="prs">Others can browse your collection</div></div><div class="tog" onclick="this.classList.toggle('off')"><div class="tg2"></div></div></div><div class="pr"><div><div class="prl">Accept offers</div><div class="prs">Allow offers on your records</div></div><div class="tog" onclick="this.classList.toggle('off')"><div class="tg2"></div></div></div></div>
+    <div class="slb">Favourite genres</div>
+    <div class="gt"><span class="gtg on">Rock</span><span class="gtg on">Jazz</span><span class="gtg on">Soul</span><span class="gtg">Electronic</span><span class="gtg">Blues</span><span class="gtg">Folk</span><span class="gtg">Classical</span></div>
+    <div class="slb">Account</div>
+    <div class="pc"><div class="pr"><span class="prl">Discogs account</span><div style="display:flex;align-items:center;gap:6px"><div style="width:7px;height:7px;border-radius:50%;background:var(--green)"></div><span class="prv">Connected</span></div></div><div class="pr"><span class="prl">Notifications</span><span class="prv">Offers, events</span></div><div class="pr"><span class="prl">Currency</span><span class="prv">GBP (&#163;)</span></div></div>
+    <div style="text-align:center;padding:10px 0 28px;font-size:11px;color:#222;font-family:'DM Mono'">My Vinyl Live v1.0 &middot; &copy; The Naked Film Co Ltd</div>
+  </div>
+</div>
+
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="main-nav">
+  <div class="tab on" id="tab-col" onclick="go('col','tab-col')" role="tab" aria-label="Collection"><i class="ti ti-vinyl"></i>Collection</div>
+  <div class="tab" id="tab-add" onclick="go('add','tab-add')" role="tab" aria-label="Add"><i class="ti ti-camera"></i>Add</div>
+  <div class="tab" id="tab-ev" onclick="go('ev','tab-ev')" role="tab" aria-label="Near You"><i class="ti ti-map-2"></i>Near You</div>
+  <div class="tab" id="tab-gig" onclick="go('gig','tab-gig')" role="tab" aria-label="Gigs"><i class="ti ti-ticket"></i>Gigs</div>
+  <div class="tab" id="tab-want" onclick="go('want','tab-want')" role="tab" aria-label="Want List"><i class="ti ti-heart"></i>Want</div>
+  <div class="tab" id="tab-mkt" onclick="go('mkt','tab-mkt')" role="tab" aria-label="Offers"><i class="ti ti-currency-pound"></i>Offers</div>
+  <div class="tab" id="tab-pro" onclick="go('pro','tab-pro')" role="tab" aria-label="Profile"><i class="ti ti-user-circle"></i>Profile</div>
+</nav>
+
+<script>
+var albumData = {
+  lz4:{emoji:'&#127928;',bg:'linear-gradient(135deg,#140505,#280a0a)',artist:'Led Zeppelin',title:'IV',label:'Atlantic',year:'1971',country:'UK',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'VG+',pressing:'1st UK',cat:'2401 012',low:'28',median:'75',high:'240',genre:'Rock',gc:'tt tt-r',tracks:[{side:'Side A',t:[['A1','Black Dog','4:54'],['A2','Rock and Roll','3:40'],['A3','The Battle of Evermore','5:51'],['A4','Stairway to Heaven','8:02']]},{side:'Side B',t:[['B1','Misty Mountain Hop','4:38'],['B2','Four Sticks','4:44'],['B3','Going to California','3:31'],['B4','When the Levee Breaks','7:07']]}]},
+  ziggy:{emoji:'&#127928;',bg:'linear-gradient(135deg,#0a1a2e,#1a0a00)',artist:'David Bowie',title:'Ziggy Stardust',label:'RCA',year:'1972',country:'UK',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'VG+',pressing:'1st UK',cat:'SF 8287',low:'40',median:'90',high:'280',genre:'Rock',gc:'tt tt-r',tracks:[{side:'Side A',t:[['A1','Five Years','4:42'],['A2','Soul Love','3:33'],['A3','Moonage Daydream','4:40'],['A4','Starman','4:10']]},{side:'Side B',t:[['B1','Lady Stardust','3:22'],['B2','Ziggy Stardust','3:13'],['B3','Suffragette City','3:25'],['B4',"Rock 'n' Roll Suicide",'2:57']]}]},
+  wall:{emoji:'&#127928;',bg:'#e8e4dc',artist:'Pink Floyd',title:'The Wall',label:'Harvest',year:'1979',country:'UK',format:'2xLP, Album',speed:'33\u2153 rpm',sides:'4',condition:'NM',pressing:'1st UK',cat:'SHDW 411',low:'60',median:'140',high:'350',genre:'Rock',gc:'tt tt-r',tracks:[{side:'Side A',t:[['A1','In the Flesh?','3:20'],['A2','Another Brick in the Wall Pt.2','3:59'],['A3','Mother','5:32']]},{side:'Side B',t:[['B1','Comfortably Numb','6:23'],['B2','Run Like Hell','4:22'],['B3','Outside the Wall','1:41']]}]},
+  darkside:{emoji:'&#127928;',bg:'#000',artist:'Pink Floyd',title:'Dark Side of the Moon',label:'Harvest',year:'1973',country:'UK',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'NM',pressing:'1st UK',cat:'SHVL 804',low:'120',median:'320',high:'900',genre:'Rock',gc:'tt tt-r',tracks:[{side:'Side A',t:[['A1','Speak to Me / Breathe','3:57'],['A2','On the Run','3:30'],['A3','Time / Breathe (Reprise)','7:05'],['A4','The Great Gig in the Sky','4:44']]},{side:'Side B',t:[['B1','Money','6:22'],['B2','Us and Them','7:51'],['B3','Any Colour You Like','3:25'],['B4','Brain Damage','3:47'],['B5','Eclipse','2:03']]}]},
+  rumours:{emoji:'&#127928;',bg:'linear-gradient(160deg,#3d2b1a,#1a1008)',artist:'Fleetwood Mac',title:'Rumours',label:'Warner Bros.',year:'1977',country:'UK',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'VG+',pressing:'1st UK',cat:'K 56344',low:'15',median:'40',high:'120',genre:'Rock',gc:'tt tt-r',tracks:[{side:'Side A',t:[['A1','Second Hand News','2:43'],['A2','Dreams','4:14'],['A3','Never Going Back Again','2:14'],['A4',"Don't Stop",'3:11'],['A5','Go Your Own Way','3:38']]},{side:'Side B',t:[['B1','The Chain','4:29'],['B2','You Make Loving Fun','3:31'],['B3','Gold Dust Woman','4:51']]}]},
+  bib:{emoji:'&#127928;',bg:'#0a0a0a',artist:'AC/DC',title:'Back in Black',label:'Atlantic',year:'1980',country:'AU',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'VG',pressing:'1st Australian',cat:'SBLP 1',low:'20',median:'55',high:'180',genre:'Rock',gc:'tt tt-r',tracks:[{side:'Side A',t:[['A1','Hells Bells','5:12'],['A2','Shoot to Thrill','5:17'],['A3','What Do You Do for Money Honey','3:35'],['A4','Given the Dog a Bone','3:31'],['A5','Let Me Put My Love into You','4:15']]},{side:'Side B',t:[['B1','Back in Black','4:15'],['B2','You Shook Me All Night Long','3:30'],['B3','Have a Drink on Me','3:58'],['B4','Shake a Leg','4:05'],['B5',"Rock and Roll Ain't Noise Pollution",'4:15']]}]},
+  kob:{emoji:'&#127927;',bg:'linear-gradient(160deg,#1a2a3a,#080e14)',artist:'Miles Davis',title:'Kind of Blue',label:'Columbia',year:'1959',country:'US',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'VG',pressing:'1st US',cat:'CL 1355',low:'80',median:'200',high:'600',genre:'Jazz',gc:'tt tt-j',tracks:[{side:'Side A',t:[['A1','So What','9:22'],['A2','Freddie Freeloader','9:46'],['A3','Blue in Green','5:37']]},{side:'Side B',t:[['B1','All Blues','11:33'],['B2','Flamenco Sketches','9:26']]}]},
+  als:{emoji:'&#127927;',bg:'linear-gradient(160deg,#1a1a1a,#0a0a0a)',artist:'John Coltrane',title:'A Love Supreme',label:'Impulse!',year:'1965',country:'US',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'VG+',pressing:'1st US',cat:'A-77',low:'60',median:'180',high:'500',genre:'Jazz',gc:'tt tt-j',tracks:[{side:'Side A',t:[['A1','Part 1: Acknowledgement','7:43'],['A2','Part 2: Resolution','7:23']]},{side:'Side B',t:[['B1','Part 3: Pursuance','10:42'],['B2','Part 4: Psalm','7:05']]}]},
+  autobahn:{emoji:'&#127929;',bg:'linear-gradient(160deg,#1a1a28,#0e0e1c)',artist:'Kraftwerk',title:'Autobahn',label:'Philips',year:'1974',country:'DE',format:'LP, Album',speed:'33\u2153 rpm',sides:'2',condition:'VG+',pressing:'1st German',cat:'6305 231',low:'35',median:'85',high:'220',genre:'Electronic',gc:'tt tt-e',tracks:[{side:'Side A',t:[['A1','Autobahn','22:43']]},{side:'Side B',t:[['B1','Kometenmelodie 1','6:43'],['B2','Kometenmelodie 2','8:25'],['B3','Mitternacht','4:24'],['B4','Morgenspaziergang','4:40']]}]},
+  sitkofl:{emoji:'&#127908;',bg:'linear-gradient(160deg,#3a1a00,#281200)',artist:'Stevie Wonder',title:'Songs in the Key of Life',label:'Tamla',year:'1976',country:'US',format:'2xLP, Album',speed:'33\u2153 rpm',sides:'4',condition:'VG+',pressing:'1st US',cat:'T13-340C2',low:'20',median:'60',high:'200',genre:'Soul',gc:'tt tt-s',tracks:[{side:'Side A',t:[["A1","Love's in Need of Love Today",'7:06'],['A2','Sir Duke','3:52'],['A3','I Wish','4:11']]},{side:'Side B',t:[["B1","Isn't She Lovely",'6:34'],['B2','As','7:08'],['B3','Another Star','8:28']]}]}
+};
+
+function go(id, tid) {
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
+  document.getElementById('s-'+id).classList.add('on');
+  if (tid) {
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+    document.getElementById(tid).classList.add('on');
+  }
+}
+
+/* ── RECORD DATA for sorting ── */
+var records = [
+  {num:1,artist:'AC/DC',title:'Back in Black',label:'Atlantic',year:1980,genre:'Rock',gc:'tt-r',fmt:'LP',added:13,value:55,cat:'SBLP 1',offer:false,tracks:[{side:'Side A',t:[['A1','Hells Bells','5:12'],['A2','Shoot to Thrill','5:17'],['A3','What Do You Do for Money Honey','3:35'],['A4','Given the Dog a Bone','3:31'],['A5','Let Me Put My Love into You','4:15']]},{side:'Side B',t:[['B1','Back in Black','4:15'],['B2','You Shook Me All Night Long','3:30'],['B3','Have a Drink on Me','3:58'],['B4','Shake a Leg','4:05'],['B5',"Rock and Roll Ain't Noise Pollution",'4:15']]}]},
+  {num:2,artist:'David Bowie',title:'Ziggy Stardust',label:'RCA',year:1972,genre:'Rock',gc:'tt-r',fmt:'LP',added:11,value:90,cat:'SF 8287',offer:true,offerAmt:65,tracks:[{side:'Side A',t:[['A1','Five Years','4:42'],['A2','Soul Love','3:33'],['A3','Moonage Daydream','4:40'],['A4','Starman','4:10']]},{side:'Side B',t:[['B1','Lady Stardust','3:22'],['B2','Ziggy Stardust','3:13'],['B3','Suffragette City','3:25'],['B4',"Rock 'n' Roll Suicide",'2:57']]}]},
+  {num:3,artist:'John Coltrane',title:'A Love Supreme',label:'Impulse!',year:1965,genre:'Jazz',gc:'tt-j',fmt:'LP',added:8,value:180,cat:'A-77',offer:false,tracks:[{side:'Side A',t:[['A1','Part 1: Acknowledgement','7:43'],['A2','Part 2: Resolution','7:23']]},{side:'Side B',t:[['B1','Part 3: Pursuance','10:42'],['B2','Part 4: Psalm','7:05']]}]},
+  {num:4,artist:'Miles Davis',title:'Kind of Blue',label:'Columbia',year:1959,genre:'Jazz',gc:'tt-j',fmt:'LP',added:6,value:200,cat:'CL 1355',offer:false,tracks:[{side:'Side A',t:[['A1','So What','9:22'],['A2','Freddie Freeloader','9:46'],['A3','Blue in Green','5:37']]},{side:'Side B',t:[['B1','All Blues','11:33'],['B2','Flamenco Sketches','9:26']]}]},
+  {num:5,artist:'Fleetwood Mac',title:'Rumours',label:'Warner',year:1977,genre:'Rock',gc:'tt-r',fmt:'LP',added:9,value:40,cat:'K 56344',offer:false,tracks:[{side:'Side A',t:[['A1','Second Hand News','2:43'],['A2','Dreams','4:14'],['A3','Never Going Back Again','2:14'],['A4',"Don't Stop",'3:11'],['A5','Go Your Own Way','3:38']]},{side:'Side B',t:[['B1','The Chain','4:29'],['B2','You Make Loving Fun','3:31'],['B3','Gold Dust Woman','4:51']]}]},
+  {num:6,artist:'Kraftwerk',title:'Autobahn',label:'Philips',year:1974,genre:'Electronic',gc:'tt-e',fmt:'LP',added:5,value:85,cat:'6305 231',offer:false,tracks:[{side:'Side A',t:[['A1','Autobahn','22:43']]},{side:'Side B',t:[['B1','Kometenmelodie 1','6:43'],['B2','Kometenmelodie 2','8:25'],['B3','Mitternacht','4:24'],['B4','Morgenspaziergang','4:40']]}]},
+  {num:7,artist:'Led Zeppelin',title:'IV',label:'Atlantic',year:1971,genre:'Rock',gc:'tt-r',fmt:'LP',added:12,value:75,cat:'2401 012',offer:false,tracks:[{side:'Side A',t:[['A1','Black Dog','4:54'],['A2','Rock and Roll','3:40'],['A3','The Battle of Evermore','5:51'],['A4','Stairway to Heaven','8:02']]},{side:'Side B',t:[['B1','Misty Mountain Hop','4:38'],['B2','Four Sticks','4:44'],['B3','Going to California','3:31'],['B4','When the Levee Breaks','7:07']]}]},
+  {num:8,artist:'Pink Floyd',title:'The Wall',label:'Harvest',year:1979,genre:'Rock',gc:'tt-r',fmt:'2xLP',added:7,value:140,cat:'SHDW 411',offer:false,tracks:[{side:'Side A',t:[['A1','In the Flesh?','3:20'],['A2','Another Brick in the Wall Pt.2','3:59'],['A3','Mother','5:32']]},{side:'Side B',t:[['B1','Comfortably Numb','6:23'],['B2','Run Like Hell','4:22'],['B3','Outside the Wall','1:41']]}]},
+  {num:9,artist:'Stevie Wonder',title:'Songs in the Key of Life',label:'Tamla',year:1976,genre:'Soul',gc:'tt-s',fmt:'2xLP',added:10,value:60,cat:'T13-340C2',offer:true,offerAmt:88,tracks:[{side:'Side A',t:[['A1',"Love's in Need of Love Today",'7:06'],['A2','Sir Duke','3:52'],['A3','I Wish','4:11']]},{side:'Side B',t:[['B1',"Isn't She Lovely",'6:34'],['B2','As','7:08'],['B3','Another Star','8:28']]}]}
+];
+
+var currentSort = 'artist';
+var currentGenre = 'All';
+
+function ss(el) {
+  el.closest('.sort').querySelectorAll('.sp').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');
+  var txt = el.textContent.trim().toLowerCase();
+  if (txt.indexOf('artist') > -1) currentSort = 'artist';
+  else if (txt.indexOf('title') > -1) currentSort = 'title';
+  else if (txt.indexOf('year') > -1) currentSort = 'year';
+  else if (txt.indexOf('added') > -1) currentSort = 'added';
+  else if (txt.indexOf('value') > -1) currentSort = 'value';
+  else if (txt.indexOf('genre') > -1) currentSort = 'genre';
+  renderList();
+}
+
+function sg(el) {
+  el.closest('.gf').querySelectorAll('.gp2').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');
+  currentGenre = el.textContent.trim();
+  renderList();
+}
+
+function renderList() {
+  var filtered = records.filter(function(r) {
+    return currentGenre === 'All' || r.genre === currentGenre;
+  });
+
+  var sorted = filtered.slice().sort(function(a, b) {
+    if (currentSort === 'year')   return a.year - b.year;
+    if (currentSort === 'added')  return b.added - a.added;
+    if (currentSort === 'value')  return b.value - a.value;
+    if (currentSort === 'genre')  return a.genre.localeCompare(b.genre) || a.artist.localeCompare(b.artist);
+    if (currentSort === 'title')  return a.title.localeCompare(b.title);
+    return a.artist.localeCompare(b.artist);
+  });
+
+  var html = '';
+  var lastLetter = '';
+
+  sorted.forEach(function(r, i) {
+    var key = currentSort === 'title' ? r.title : currentSort === 'genre' ? r.genre : r.artist;
+    var letter = key.charAt(0).toUpperCase();
+    if (letter !== lastLetter) {
+      html += '<div class="ah">' + letter + '</div>';
+      lastLetter = letter;
+    }
+
+    var offerHtml = r.offer
+      ? '<div class="tro"><i class="ti ti-tag"></i>Offer &middot; &pound;' + r.offerAmt + '</div>'
+      : '';
+
+    var valueHtml = currentSort === 'value'
+      ? '<div style="font-family:DM Mono;font-size:10px;color:var(--gdim);margin-top:2px">&pound;' + r.value + '</div>'
+      : '';
+
+    var tid = 'lr-s' + i;
+
+    var tracksHtml = '';
+    r.tracks.forEach(function(s) {
+      tracksHtml += '<div class="track-side"><span class="side-lbl">' + s.side + '</span></div>';
+      s.t.forEach(function(t, ti) {
+        var border = ti === s.t.length - 1 ? ' style="border:none"' : '';
+        tracksHtml += '<div class="track-row"' + border + '>'
+          + '<span class="track-num">' + t[0] + '</span>'
+          + '<span class="track-title">' + t[1] + '</span>'
+          + '<span class="track-dur">' + t[2] + '</span>'
+          + '</div>';
+      });
+    });
+
+    html += '<div class="lrow" id="' + tid + '">'
+      + '<div class="lr-hdr" data-id="' + tid + '">'
+      + '<span class="trn">' + (i + 1) + '</span>'
+      + '<div class="trm">'
+      + '<div class="tra">' + r.artist + '</div>'
+      + '<div class="trt">' + r.title + '</div>'
+      + '<div class="trx">' + r.label + ' &middot; ' + r.year + ' &middot; ' + r.cat + '</div>'
+      + offerHtml
+      + '</div>'
+      + '<div class="trr">'
+      + '<div class="try">' + r.year + '</div>'
+      + '<span class="tt ' + r.gc + '">' + r.genre + '</span><br>'
+      + '<span class="fmt-sm">' + r.fmt + ' &middot; 33rpm</span>'
+      + valueHtml
+      + '</div>'
+      + '<i class="ti ti-chevron-down lr-chev"></i>'
+      + '</div>'
+      + '<div class="lr-tracks" style="display:none">' + tracksHtml + '</div>'
+      + '</div>';
+  });
+
+  if (html === '') {
+    html = '<div style="padding:32px 16px;text-align:center;color:var(--mu);font-size:15px">No records in this genre</div>';
+  }
+
+  var list = document.getElementById('v-list');
+  list.innerHTML = html;
+
+  /* Event delegation — one listener handles all rows */
+  list.addEventListener('click', function(e) {
+    var hdr = e.target.closest('.lr-hdr');
+    if (!hdr) return;
+    var id = hdr.getAttribute('data-id');
+    if (id) toggleRow(id);
+  }, { once: true });
+}
+
+/* sg defined above */
+function sef(el){el.closest('.ef').querySelectorAll('.ep').forEach(function(p){p.classList.remove('on');});el.classList.add('on');}
+function sv(v){
+  document.getElementById('v-grid').style.display=v==='grid'?'grid':'none';
+  document.getElementById('v-list').style.display=v==='list'?'block':'none';
+  document.getElementById('vg').classList.toggle('on',v==='grid');
+  document.getElementById('vl').classList.toggle('on',v==='list');
+}
+function toggleRow(id){
+  var r=document.getElementById(id);
+  var t=r.querySelector('.lr-tracks');
+  var c=r.querySelector('.lr-chev');
+  var open=t.style.display!=='none';
+  t.style.display=open?'none':'block';
+  c.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+function toggleTracks(){
+  var l=document.getElementById('det-track-list');
+  var c=document.getElementById('det-track-chevron');
+  var t=document.getElementById('track-toggle');
+  if(!l)return;
+  var open=l.style.display!=='none';
+  l.style.display=open?'none':'block';
+  if(c)c.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+  if(t)t.setAttribute('aria-expanded',open?'false':'true');
+}
+function toggleGig(id){
+  var card=document.getElementById(id);
+  var body=card.querySelector('.gig-body');
+  var chev=card.querySelector('[id$="-chev"]');
+  var open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  if(chev)chev.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+function showAddGig(){document.getElementById('add-gig-panel').style.display='block';}
+function hideAddGig(){document.getElementById('add-gig-panel').style.display='none';}
+function toggleWant(id){
+  var r=document.getElementById(id);
+  var d=r.querySelector('.wr-detail');
+  var c=r.querySelector('.wr-chev');
+  var open=d.style.display!=='none';
+  d.style.display=open?'none':'block';
+  c.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+function startShazam(){
+  document.getElementById('shazam-idle').style.display='none';
+  document.getElementById('shazam-listening').style.display='block';
+  setTimeout(function(){
+    document.getElementById('shazam-listening').style.display='none';
+    document.getElementById('shazam-added').style.display='block';
+  },2800);
+}
+function resetShazam(){
+  document.getElementById('shazam-idle').style.display='block';
+  document.getElementById('shazam-listening').style.display='none';
+  document.getElementById('shazam-added').style.display='none';
+}
+function openAlbum(id){
+  var a=albumData[id];
+  if(!a){go('det','tab-col');return;}
+  var el=document.getElementById('det-emoji');
+  if(el){el.innerHTML=a.emoji;el.style.background=a.bg;}
+  function set(eid,val){var e=document.getElementById(eid);if(e)e.textContent=val;}
+  set('det-artist',a.artist);
+  set('det-title',a.title);
+  set('det-label',a.label);
+  set('det-year',a.year);
+  set('det-country',a.country);
+  set('det-format',a.format);
+  set('det-speed',a.speed);
+  set('det-sides',a.sides);
+  set('det-condition',a.condition);
+  set('det-pressing',a.pressing);
+  set('det-cat',a.cat);
+  set('det-low','\u00a3'+a.low);
+  set('det-median','\u00a3'+a.median);
+  set('det-high','\u00a3'+a.high);
+  set('det-track-summary',a.title);
+  var gb=document.getElementById('det-genre-badge');
+  if(gb){gb.className=a.gc;gb.textContent=a.genre;}
+  var tl=document.getElementById('det-track-list');
+  if(tl&&a.tracks){
+    var h='';
+    a.tracks.forEach(function(s){
+      h+='<div class="track-side"><span class="side-lbl">'+s.side+'</span></div>';
+      s.t.forEach(function(t,i){
+        var b=i===s.t.length-1?'style="border:none"':'';
+        h+='<div class="track-row" '+b+'><span class="track-num">'+t[0]+'</span><span class="track-title">'+t[1]+'</span><span class="track-dur">'+t[2]+'</span></div>';
+      });
+    });
+    tl.innerHTML=h;
+    tl.style.display='none';
+  }
+  var chev=document.getElementById('det-track-chevron');
+  if(chev)chev.style.transform='rotate(0deg)';
+  var tog=document.getElementById('track-toggle');
+  if(tog)tog.setAttribute('aria-expanded','false');
+  go('det','tab-col');
+}
+function showShazamAdd(){
+  var p=document.getElementById('shazam-add-panel');
+  p.style.display='block';
+  document.getElementById('sa-idle').style.display='block';
+  document.getElementById('sa-listening').style.display='none';
+  document.getElementById('sa-match').style.display='none';
+  document.getElementById('sa-done').style.display='none';
+}
+function resetShazamAdd(){
+  document.getElementById('shazam-add-panel').style.display='none';
+}
+function startShazamAdd(){
+  document.getElementById('sa-idle').style.display='none';
+  document.getElementById('sa-listening').style.display='block';
+  setTimeout(function(){
+    document.getElementById('sa-listening').style.display='none';
+    document.getElementById('sa-match').style.display='block';
+  },2800);
+}
+function shazamAddToCollection(){
+  document.getElementById('sa-match').style.display='none';
+  document.getElementById('sa-done-msg').textContent='Added to collection';
+  document.getElementById('sa-done').style.display='block';
+}
+function shazamAddToWant(){
+  document.getElementById('sa-match').style.display='none';
+  document.getElementById('sa-done-msg').textContent='Added to want list';
+  document.getElementById('sa-done').style.display='block';
+}
+sv('grid');
+renderList();
+</script>
+</body>
+</html>
